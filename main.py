@@ -11,7 +11,7 @@ class Config:
     def __init__(self):
         self.learning_rate = 1e-3 
         self.beta1 = 0.9   
-        self.epoch = 500  
+        self.epoch = 300  
 
 npz_path = "./reference_models_processed/dog/voxel_and_sdf.npz"
 data = np.load(npz_path)

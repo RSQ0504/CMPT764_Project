@@ -110,7 +110,7 @@ class BAE_Net(nn.Module):
 
 class BAE_NET_Wrapper:
     def __init__(self, 
-                 L1reg=False,
+                 L1reg=True,
                  checkpoint_dir='checkpoint', 
                  sample_dir='samples',
                  data_dir='./data'):
@@ -177,11 +177,18 @@ class BAE_NET_Wrapper:
             
             for idx in range(num_shapes):
                 shape_idx = indices[idx]
-                num_sample = 10000
-                num_points = self.data_points[shape_idx].shape[0]
-                # print(num_points)
-                sample_idx = np.random.choice(num_points, size=num_sample, replace=False)
+                
+                num_sample = 30000
+                
+                occupancy = self.data_occupancy[shape_idx]
+                pos_idx = np.where(occupancy > 0.5)[0]
+                neg_idx = np.where(occupancy <= 0.5)[0]
+                num_neg_sample = min(len(pos_idx), num_sample // 2)
+                sample_neg = np.random.choice(neg_idx, size=num_neg_sample, replace=False)
+                sample_idx = np.concatenate([pos_idx, sample_neg])
+                np.random.shuffle(sample_idx)
 
+                
                 
                 batch_voxels = torch.FloatTensor(
                     np.array([self.data_voxels[shape_idx:shape_idx+1]])
@@ -266,7 +273,7 @@ class BAE_NET_Wrapper:
             z = self.model.encoder(batch_voxels)
             
             # Get segmentation
-            branch_pred, _ = self.model.generator(batch_points, z)
+            branch_pred, pred = self.model.generator(batch_points, z)
             
             if use_postprocessing:
                 branch_pred = self._postprocess_segmentation(
