@@ -7,9 +7,9 @@ from model import Encoder3D, BAE_NET_Wrapper
 
 class Config:
     def __init__(self):
-        self.learning_rate = 1e-3   # Adam 学习率
-        self.beta1 = 0.9            # Adam β1
-        self.epoch = 500  
+        self.learning_rate = 1e-3 
+        self.beta1 = 0.9   
+        self.epoch = 100  
 
 npz_path = "./reference_models_processed/dog/voxel_and_sdf.npz"
 data = np.load(npz_path)

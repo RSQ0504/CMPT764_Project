@@ -176,7 +176,7 @@ class BAE_NET_Wrapper:
             
             for idx in range(num_shapes):
                 shape_idx = indices[idx]
-                num_sample = 50000
+                num_sample = 30000
                 num_points = self.data_points[shape_idx].shape[0]
                 # print(num_points)
                 sample_idx = np.random.choice(num_points, size=num_sample, replace=False)
