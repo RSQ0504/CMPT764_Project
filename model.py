@@ -44,13 +44,13 @@ class Generator(nn.Module):
         self.gf_split = gf_split
         self.L1reg = L1reg
         
-        self.fc1 = nn.Linear(z_dim + 3, gf_dim * 4)
-        self.fc2 = nn.Linear(gf_dim * 4, gf_dim)
+        self.fc1 = nn.Linear(z_dim + 3, 3072)
+        self.fc2 = nn.Linear(3072, 384)
         
         if L1reg:
-            self.fc3 = nn.Linear(gf_dim, gf_split)
+            self.fc3 = nn.Linear(384, 12)
         else:
-            self.fc3 = nn.Linear(gf_dim, gf_split)
+            self.fc3 = nn.Linear(384, 12)
         
     def forward(self, points, z):
         # points: [batch, 3]
@@ -139,16 +139,17 @@ class BAE_NET_Wrapper:
         voxels_list = []
         points_list = []
         values_list = []
+        
+        shape = "dog"
 
-        for shape in os.listdir(self.data_dir):
-            data_npz_name = f'{self.data_dir}/{shape}/voxel_and_sdf.npz'
-            if not os.path.exists(data_npz_name):
-                raise FileNotFoundError(f"Cannot load {data_npz_name}")
+        data_npz_name = f'{self.data_dir}/{shape}/voxel_and_sdf.npz'
+        if not os.path.exists(data_npz_name):
+            raise FileNotFoundError(f"Cannot load {data_npz_name}")
             
-            data = np.load(data_npz_name)
-            voxels_list.append(data['voxels'])        # shape (D,H,W)
-            points_list.append(data['sdf_points'])    # shape (num_points,3)
-            values_list.append(data['sdf_values'])    # shape (num_points,)
+        data = np.load(data_npz_name)
+        voxels_list.append(data['voxels'])        # shape (D,H,W)
+        points_list.append(data['sdf_points'])    # shape (num_points,3)
+        values_list.append(data['sdf_values'])    # shape (num_points,)
         
         # 转成 numpy array
         self.data_voxels = np.array(voxels_list)      # shape (num_shapes,D,H,W)
@@ -178,14 +179,18 @@ class BAE_NET_Wrapper:
             for idx in range(num_shapes):
                 shape_idx = indices[idx]
                 
-                num_sample = 30000
+                num_sample = 20000
                 
                 occupancy = self.data_occupancy[shape_idx]
-                pos_idx = np.where(occupancy > 0.5)[0]
-                neg_idx = np.where(occupancy <= 0.5)[0]
-                num_neg_sample = min(len(pos_idx), num_sample // 2)
+                pos_idx = np.where(occupancy == 1)[0]
+                neg_idx = np.where(occupancy == 0)[0]
+                num_pos_sample = min(len(pos_idx), num_sample // 2)
+                num_neg_sample = num_pos_sample
+                sample_pos = np.random.choice(pos_idx, size=num_pos_sample, replace=False)
                 sample_neg = np.random.choice(neg_idx, size=num_neg_sample, replace=False)
-                sample_idx = np.concatenate([pos_idx, sample_neg])
+                sample_idx = np.concatenate([sample_pos, sample_neg])
+                # print(sample_idx.shape)
+                # quit()
                 np.random.shuffle(sample_idx)
 
                 
@@ -202,7 +207,7 @@ class BAE_NET_Wrapper:
                 batch_values = torch.FloatTensor(
                     np.array([self.data_occupancy[shape_idx][sample_idx]]).squeeze(0)
                 ).to(self.device)
-                # print(batch_voxels.shape,batch_points.shape, batch_values.shape)
+                print(batch_voxels.shape,batch_points.shape, batch_values.shape)
                 # Forward pass
                 pred_occupancy = self.model(batch_voxels, batch_points, mode='train')
                 
@@ -229,7 +234,7 @@ class BAE_NET_Wrapper:
             print(f"Epoch [{epoch}/{config.epoch}] Average Loss: {avg_loss:.6f}")
             
             # Save checkpoint
-            if epoch % 50 == 0:
+            if epoch % 10000 == 0:
                 self.save_checkpoint(epoch, avg_loss)
     
     
@@ -274,6 +279,7 @@ class BAE_NET_Wrapper:
             
             # Get segmentation
             branch_pred, pred = self.model.generator(batch_points, z)
+
             
             if use_postprocessing:
                 branch_pred = self._postprocess_segmentation(
