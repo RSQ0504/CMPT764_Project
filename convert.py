@@ -2,6 +2,7 @@ import numpy as np
 import pyvista as pv
 from skimage import measure
 from skimage.morphology import skeletonize, medial_axis
+import trimesh
 
 
 
@@ -26,6 +27,8 @@ plotter1 = pv.Plotter(title="1")
 plotter1.add_mesh(mesh_smooth, color="white", opacity=0.5)
 plotter1.show()
 
+mesh_tri = trimesh.Trimesh(vertices=verts, faces=faces[:, 1:], process=False)
+mesh_tri.export("output_mesh.off")
 # # Voxel Mesh
 # x, y, z = np.where(voxels)
 # cubes = [pv.Cube(center=(xi, yi, zi), x_length=1, y_length=1, z_length=1) for xi, yi, zi in zip(x, y, z)]
