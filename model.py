@@ -154,6 +154,7 @@ class BAE_NET_Wrapper:
         self.data_voxels = np.array(voxels_list)      # shape (num_shapes,D,H,W)
         self.data_points = np.array(points_list)      # shape (num_shapes,num_points,3)
         self.data_values = np.array(values_list)      # shape (num_shapes,num_points)
+        self.data_occupancy = (self.data_values <= 0).astype(np.float32)  # shape (num_shapes,num_points)
 
             
 
@@ -176,7 +177,7 @@ class BAE_NET_Wrapper:
             
             for idx in range(num_shapes):
                 shape_idx = indices[idx]
-                num_sample = 30000
+                num_sample = 10000
                 num_points = self.data_points[shape_idx].shape[0]
                 # print(num_points)
                 sample_idx = np.random.choice(num_points, size=num_sample, replace=False)
@@ -188,8 +189,11 @@ class BAE_NET_Wrapper:
                 batch_points = torch.FloatTensor(
                     np.array([self.data_points[shape_idx][sample_idx]]).squeeze(0)
                 ).to(self.device)
+                # batch_values = torch.FloatTensor(
+                #     np.array([self.data_values[shape_idx][sample_idx]]).squeeze(0)
+                # ).to(self.device)
                 batch_values = torch.FloatTensor(
-                    np.array([self.data_values[shape_idx][sample_idx]]).squeeze(0)
+                    np.array([self.data_occupancy[shape_idx][sample_idx]]).squeeze(0)
                 ).to(self.device)
                 # print(batch_voxels.shape,batch_points.shape, batch_values.shape)
                 # Forward pass
@@ -212,14 +216,13 @@ class BAE_NET_Wrapper:
                 
                 total_loss += loss.item()
                 
-                if idx % 100 == 0:
-                    print(f"Epoch [{epoch}/{config.epoch}] Batch [{idx}/{num_shapes}] Loss: {loss.item():.6f}")
+                print(f"Epoch [{epoch}/{config.epoch}] Batch [{idx}/{num_shapes}] Loss: {loss.item():.6f}")
             
             avg_loss = total_loss / num_shapes
             print(f"Epoch [{epoch}/{config.epoch}] Average Loss: {avg_loss:.6f}")
             
             # Save checkpoint
-            if epoch % 10 == 0:
+            if epoch % 50 == 0:
                 self.save_checkpoint(epoch, avg_loss)
     
     
