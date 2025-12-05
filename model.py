@@ -44,13 +44,13 @@ class Generator(nn.Module):
         self.gf_split = gf_split
         self.L1reg = L1reg
         
-        self.fc1 = nn.Linear(z_dim + 3, 3072)
-        self.fc2 = nn.Linear(3072, 384)
+        self.fc1 = nn.Linear(z_dim + 3, 256)
+        self.fc2 = nn.Linear(256, 256)
         
         if L1reg:
-            self.fc3 = nn.Linear(384, 12)
+            self.fc3 = nn.Linear(256, 4)
         else:
-            self.fc3 = nn.Linear(384, 12)
+            self.fc3 = nn.Linear(256, 4)
         
     def forward(self, points, z):
         # points: [batch, 3]
@@ -156,6 +156,7 @@ class BAE_NET_Wrapper:
         self.data_points = np.array(points_list)      # shape (num_shapes,num_points,3)
         self.data_values = np.array(values_list)      # shape (num_shapes,num_points)
         self.data_occupancy = (self.data_values <= 0).astype(np.float32)  # shape (num_shapes,num_points)
+        # print(self.data_voxels.shape, self.data_points.shape, self.data_values.shape)
 
             
 
@@ -196,8 +197,9 @@ class BAE_NET_Wrapper:
                 
                 
                 batch_voxels = torch.FloatTensor(
-                    np.array([self.data_voxels[shape_idx:shape_idx+1]])
-                ).to(self.device)
+                    np.array(self.data_voxels[shape_idx:shape_idx+1])
+                ).to(self.device).unsqueeze(-1)
+                print(batch_voxels.shape)
                 batch_points = torch.FloatTensor(
                     np.array([self.data_points[shape_idx][sample_idx]]).squeeze(0)
                 ).to(self.device)
