@@ -7,7 +7,7 @@ import numpy as np
 import json
 import branch_utils as branch_utils
 gem = []
-folder = "./reference_models_processed/sofa"  # Replace with the path to a specific folder to visualize
+folder = "./reference_models_processed/dog"
 for file in os.listdir(folder):
     if file.startswith("branch_") and file.endswith(".ply"):
         pcd = o3d.io.read_point_cloud(os.path.join(folder, file))
