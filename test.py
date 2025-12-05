@@ -1,28 +1,15 @@
 import numpy as np
 import pyvista as pv
-from skimage import measure
-import torch
 
-from model import Encoder3D, BAE_NET_Wrapper
+# 读取
+points = np.load("segmentation.npy")  # shape (100000,4)
+xyz = points[:, :3]   # x,y,z
+labels = points[:, 3] # 标签或值
+# print(points[0:100])
 
-class Config:
-    def __init__(self):
-        self.learning_rate = 1e-3 
-        self.beta1 = 0.9   
-        self.epoch = 500  
-
-npz_path = "./reference_models_processed/dog/voxel_and_sdf.npz"
-data = np.load(npz_path)
-voxels = data['voxels']
-
-voxels = voxels.astype(np.float32)
-x = torch.from_numpy(voxels).unsqueeze(0).unsqueeze(0)
-
-encoder = Encoder3D(z_dim=128)
-z = encoder(x)
-print(z.shape)
-
-bae_net = BAE_NET_Wrapper(data_dir='./reference_models_processed')
-config = Config()
-bae_net._train_unsupervised(config)
-    
+# 可视化
+cloud = pv.PolyData(xyz)
+# 可以根据 label 上色
+plotter = pv.Plotter()
+plotter.add_mesh(cloud, scalars=labels, render_points_as_spheres=True, point_size=3)
+plotter.show()
