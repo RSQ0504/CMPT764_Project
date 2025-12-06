@@ -5,7 +5,7 @@ import torch
 import os
 import trimesh
 
-from Our_Project.compose.model import Encoder3D, BAE_NET_Wrapper
+from model import Encoder3D, BAE_NET_Wrapper
 
 class Config:
     def __init__(self):

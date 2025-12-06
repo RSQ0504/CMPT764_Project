@@ -188,6 +188,7 @@ class BAE_NET_Wrapper:
                 num_pos_sample = min(len(pos_idx), num_sample // 2)
                 num_neg_sample = num_pos_sample
                 sample_pos = np.random.choice(pos_idx, size=num_pos_sample, replace=False)
+                # import pdb; pdb.set_trace()
                 sample_neg = np.random.choice(neg_idx, size=num_neg_sample, replace=False)
                 sample_idx = np.concatenate([sample_pos, sample_neg])
                 # print(sample_idx.shape)
@@ -197,8 +198,8 @@ class BAE_NET_Wrapper:
                 
                 
                 batch_voxels = torch.FloatTensor(
-                    np.array(self.data_voxels[shape_idx:shape_idx+1])
-                ).to(self.device).unsqueeze(-1)
+                    np.array([self.data_voxels[shape_idx:shape_idx+1]])
+                ).to(self.device)
                 print(batch_voxels.shape)
                 batch_points = torch.FloatTensor(
                     np.array([self.data_points[shape_idx][sample_idx]]).squeeze(0)
@@ -209,12 +210,12 @@ class BAE_NET_Wrapper:
                 batch_values = torch.FloatTensor(
                     np.array([self.data_occupancy[shape_idx][sample_idx]]).squeeze(0)
                 ).to(self.device)
-                print(batch_voxels.shape,batch_points.shape, batch_values.shape)
+                # print(batch_voxels.shape,batch_points.shape, batch_values.shape)
                 # Forward pass
                 pred_occupancy = self.model(batch_voxels, batch_points, mode='train')
                 
                 # Calculate loss
-                loss = F.mse_loss(pred_occupancy, batch_values)
+                loss = F.mse_loss(pred_occupancy.squeeze(1), batch_values)
                 
                 if self.L1reg:
                     # Add L1 regularization

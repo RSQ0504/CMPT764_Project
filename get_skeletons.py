@@ -37,10 +37,10 @@ def process_skeleton_branches(txt_file, output_dir):
     """
     # Read skeleton segments
     segments = branch_utils.read_skeleton_segments(txt_file)
-    
+    # print(len(segments))
     # Extract branches
     branches = branch_utils.extract_skeleton_branches(segments)
-    
+    # print(len(branches))
     # Save branch information as JSON
     branch_info = {
         'branches': [
