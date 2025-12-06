@@ -335,7 +335,7 @@ class BAE_NET_Wrapper:
             z = self.model.encoder(batch_voxels)
             
             dim = 64
-            coords = np.linspace(-0.5, 0.5, dim)
+            coords = np.linspace(-1, 1, dim)
             grid_x, grid_y, grid_z = np.meshgrid(coords, coords, coords, indexing='ij')
             grid_points = np.stack([grid_x.flatten(), grid_y.flatten(), grid_z.flatten()], axis=1)
             
