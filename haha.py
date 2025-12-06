@@ -39,6 +39,7 @@ if vertices_list:
         mesh = trimesh.Trimesh(vertices=vertices, faces=triangles)
         mesh.export(f'mesh_branch_{i}.ply')
         print(f"Mesh branch {i} saved with {len(vertices)} vertices, {len(triangles)} faces")
+        plotter = pv.Plotter()
         plotter.add_mesh(mesh, show_edges=True)
         plotter.show()
-
+        plotter.close()
