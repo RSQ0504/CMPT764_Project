@@ -150,7 +150,7 @@ class BAE_NET_Wrapper:
         
         shape = "dog"
 
-        data_npz_name = f'{self.data_dir}/{shape}/voxel_and_sdf.npz'
+        data_npz_name = f'{self.data_dir}/voxel_and_sdf.npz'
         if not os.path.exists(data_npz_name):
             raise FileNotFoundError(f"Cannot load {data_npz_name}")
             

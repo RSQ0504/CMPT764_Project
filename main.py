@@ -13,7 +13,7 @@ class Config:
         self.beta1 = 0.9   
         self.epoch = 200000  
 
-npz_path = "./reference_models_processed/dog/voxel_and_sdf.npz"
+npz_path = "./reference_models_processed/hand/voxel_and_sdf.npz"
 data = np.load(npz_path)
 voxels = data['voxels']
 
@@ -24,7 +24,7 @@ encoder = Encoder3D(z_dim=128)
 z = encoder(x)
 # print(z.shape)
 
-bae_net = BAE_NET_Wrapper(data_dir='./reference_models_processed')
+bae_net = BAE_NET_Wrapper(data_dir='./reference_models_processed/hand')
 config = Config()
 bae_net._train_unsupervised(config)
 
