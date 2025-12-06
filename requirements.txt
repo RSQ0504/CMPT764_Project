@@ -1,0 +1,7 @@
+numpy
+pyvista
+scikit-image
+trimesh
+h5py
+tqdm
+open3d
