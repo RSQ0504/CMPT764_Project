@@ -1,10 +1,11 @@
 # file: model_torch.py
+import os
+
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import numpy as np
-import os
-import h5py
+from tqdm import tqdm
 
 
 class Encoder3D(nn.Module):
@@ -163,7 +164,7 @@ class BAE_NET_Wrapper:
             if "occu_values" in data:
                 occupancy_list.append(data['occu_values']) # shape (num_points,)
                 # print(data['occu_values'])
-        print(len(voxels_list), len(points_list), len(values_list), len(occupancy_list))
+        # print(len(voxels_list), len(points_list), len(values_list), len(occupancy_list))
         # quit()
         # 转成 numpy array
         self.data_voxels = np.array(voxels_list)      # shape (num_shapes,D,H,W)
@@ -190,8 +191,9 @@ class BAE_NET_Wrapper:
         num_shapes = len(self.data_points)
         indices = np.arange(num_shapes)
         # print(indices)
-        
-        for epoch in range(config.epoch):
+        epoch_bar = tqdm(range(config.epoch), desc="Training", unit="epoch")
+
+        for epoch in epoch_bar:
             np.random.shuffle(indices)
             total_loss = 0
             
@@ -249,12 +251,16 @@ class BAE_NET_Wrapper:
                 self.optimizer.step()
                 
                 total_loss += loss.item()
-                
-                print(f"Epoch [{epoch}/{config.epoch}] Batch [{idx}/{num_shapes}] Loss: {loss.item():.6f}")
+                loss_val = loss.item()
+                last_loss = loss_val
+                # print(f"Epoch [{epoch}/{config.epoch}] Batch [{idx}/{num_shapes}] Loss: {loss.item():.6f}")
             
             avg_loss = total_loss / num_shapes
-            print(f"Epoch [{epoch}/{config.epoch}] Average Loss: {avg_loss:.6f}")
-            
+            # print(f"Epoch [{epoch}/{config.epoch}] Average Loss: {avg_loss:.6f}")
+            epoch_bar.set_postfix(
+                loss=f"{last_loss:.6f}",  # last batch loss in this epoch
+                avg_loss=f"{avg_loss:.6f}"  # average loss over all shapes
+            )
             # Save checkpoint
             if epoch % 10000 == 0:
                 self.save_checkpoint(epoch, avg_loss)
@@ -277,7 +283,7 @@ class BAE_NET_Wrapper:
             checkpoint,
             os.path.join(self.checkpoint_dir, f'checkpoint_epoch_{epoch}.pth')
         )
-        print(f"Checkpoint saved at epoch {epoch}")
+        # print(f"Checkpoint saved at epoch {epoch}")
     
     def load_checkpoint(self, checkpoint_path):
         checkpoint = torch.load(checkpoint_path, map_location=self.device)
