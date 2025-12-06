@@ -208,7 +208,7 @@ class BAE_NET_Wrapper:
                 batch_voxels = torch.FloatTensor(
                     np.array([self.data_voxels[shape_idx:shape_idx+1]])
                 ).to(self.device)
-                print(batch_voxels.shape)
+                # print(batch_voxels.shape)
                 batch_points = torch.FloatTensor(
                     np.array([self.data_points[shape_idx][sample_idx]]).squeeze(0)
                 ).to(self.device)
