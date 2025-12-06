@@ -2,3 +2,4 @@ __pycache__/
 reference_models_processed/
 checkpoint/
 checkpoint_1shot/
+train

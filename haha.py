@@ -16,7 +16,7 @@ class Config:
         self.epoch = 200000
 
 
-bae_net = BAE_NET_Wrapper(data_dir='./reference_models_processed')
+bae_net = BAE_NET_Wrapper(data_dir='./reference_models_processed/hand')
 config = Config()
 bae_net.load_checkpoint("checkpoint/checkpoint_epoch_190000.pth")
 

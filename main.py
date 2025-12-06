@@ -13,18 +13,19 @@ class Config:
         self.beta1 = 0.9   
         self.epoch = 200000  
 
-npz_path = "./reference_models_processed/hand/voxel_and_sdf.npz"
-data = np.load(npz_path)
-voxels = data['voxels']
+# npz_path = "./reference_models_processed/hand/voxel_and_sdf.npz"
+# data = np.load(npz_path)
+# voxels = data['voxels']
 
-voxels = voxels.astype(np.float32)
-x = torch.from_numpy(voxels).unsqueeze(0).unsqueeze(0)
+# voxels = voxels.astype(np.float32)
+# x = torch.from_numpy(voxels).unsqueeze(0).unsqueeze(0)
 
-encoder = Encoder3D(z_dim=128)
-z = encoder(x)
-# print(z.shape)
+# encoder = Encoder3D(z_dim=128)
+# z = encoder(x)
+# # print(z.shape)
 
-bae_net = BAE_NET_Wrapper(data_dir='./reference_models_processed/hand')
+bae_net = BAE_NET_Wrapper(data_dir='./train/couch')
+# bae_net = BAE_NET_Wrapper(data_dir='./reference_models_processed/dog')
 config = Config()
 bae_net._train_unsupervised(config)
 

@@ -147,24 +147,34 @@ class BAE_NET_Wrapper:
         voxels_list = []
         points_list = []
         values_list = []
+        occupancy_list = []
         
-        shape = "dog"
-
-        data_npz_name = f'{self.data_dir}/voxel_and_sdf.npz'
-        if not os.path.exists(data_npz_name):
-            raise FileNotFoundError(f"Cannot load {data_npz_name}")
-            
-        data = np.load(data_npz_name)
-        voxels_list.append(data['voxels'])        # shape (D,H,W)
-        points_list.append(data['sdf_points'])    # shape (num_points,3)
-        values_list.append(data['sdf_values'])    # shape (num_points,)
-        
+        for npz in os.listdir(self.data_dir):
+            if not npz.endswith('.npz'):
+                continue
+            data_npz_name = f'{self.data_dir}/{npz}'
+            if not os.path.exists(data_npz_name):
+                raise FileNotFoundError(f"Cannot load {data_npz_name}")
+            data = np.load(data_npz_name)
+            voxels_list.append(data['voxels'])        # shape (D,H,W)
+            points_list.append(data['sdf_points'])    # shape (num_points,3)
+            if 'sdf_values' in data:
+                values_list.append(data['sdf_values'])    # shape (num_points,)
+            if "occu_values" in data:
+                occupancy_list.append(data['occu_values']) # shape (num_points,)
+                # print(data['occu_values'])
+        print(len(voxels_list), len(points_list), len(values_list), len(occupancy_list))
+        # quit()
         # 转成 numpy array
         self.data_voxels = np.array(voxels_list)      # shape (num_shapes,D,H,W)
         self.data_points = np.array(points_list)      # shape (num_shapes,num_points,3)
-        self.data_values = np.array(values_list)      # shape (num_shapes,num_points)
-        self.data_occupancy = (self.data_values <= 0).astype(np.float32)  # shape (num_shapes,num_points)
-        # print(self.data_voxels.shape, self.data_points.shape, self.data_values.shape)
+        if len(values_list) > 0:
+            self.data_values = np.array(values_list)      # shape (num_shapes,num_points)
+            self.data_occupancy = (self.data_values <= 0).astype(np.float32)  # shape (num_shapes,num_points)
+        if len(occupancy_list) > 0:
+            self.data_values = np.array(occupancy_list)      # shape (num_shapes,num_points)
+            self.data_occupancy = np.array(occupancy_list)  # shape (num_shapes,num_points)
+
 
             
 
@@ -179,7 +189,7 @@ class BAE_NET_Wrapper:
         
         num_shapes = len(self.data_points)
         indices = np.arange(num_shapes)
-        print(indices)
+        # print(indices)
         
         for epoch in range(config.epoch):
             np.random.shuffle(indices)
@@ -219,6 +229,7 @@ class BAE_NET_Wrapper:
                     np.array([self.data_occupancy[shape_idx][sample_idx]]).squeeze(0)
                 ).to(self.device)
                 # print(batch_voxels.shape,batch_points.shape, batch_values.shape)
+                # quit()
                 # Forward pass
                 pred_occupancy = self.model(batch_voxels, batch_points, mode='train')
                 
