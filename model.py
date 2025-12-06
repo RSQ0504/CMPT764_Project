@@ -44,13 +44,21 @@ class Generator(nn.Module):
         self.gf_split = gf_split
         self.L1reg = L1reg
         
-        self.fc1 = nn.Linear(z_dim + 3, 256)
-        self.fc2 = nn.Linear(256, 256)
+        self.fc1 = nn.Linear(z_dim + 3, 3072)
+        self.fc2 = nn.Linear(3072, 384)
         
         if L1reg:
-            self.fc3 = nn.Linear(256, 4)
+            self.fc3 = nn.Linear(384, 12)
         else:
-            self.fc3 = nn.Linear(256, 4)
+            self.fc3 = nn.Linear(384, 12)
+            
+        # self.fc1 = nn.Linear(z_dim + 3, 1024)
+        # self.fc2 = nn.Linear(1024, 256)
+        
+        # if L1reg:
+        #     self.fc3 = nn.Linear(256, 6)
+        # else:
+        #     self.fc3 = nn.Linear(256, 6)
         
     def forward(self, points, z):
         # points: [batch, 3]
