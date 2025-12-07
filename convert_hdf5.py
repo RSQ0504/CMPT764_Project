@@ -58,9 +58,9 @@ def process_h5_file(h5_path, output_dir, res_list=['64'], max_num=100):
 
 
 if __name__ == '__main__':
-    for item in os.listdir("/home/david/Documents/1TB/Courses/CMPT764/BAE-NET/data"):
+    for item in os.listdir("./data"):
         i,name = item.split('_')
-        input_dir = f'/home/david/Documents/1TB/Courses/CMPT764/BAE-NET/data/{item}/{i}_vox.hdf5' 
+        input_dir = f'./data/{item}/{i}_vox.hdf5' 
         output_dir = f'./train/{name}'
         os.makedirs(output_dir, exist_ok=True)
         process_h5_file(input_dir, output_dir, res_list=['64'])

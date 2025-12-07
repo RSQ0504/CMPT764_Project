@@ -114,15 +114,15 @@ def main(parent_folder):
 if __name__ == "__main__":
     parent_folder = './reference_models_processed'  # Replace with the path to the parent folder
     main(parent_folder)
-    # gem = []
-    # folder = "./data/dog"  # Replace with the path to a specific folder to visualize
-    # for file in os.listdir(folder):
-    #     if file.startswith("branch_") and file.endswith(".ply"):
-    #         pcd = o3d.io.read_point_cloud(os.path.join(folder, file))
-    #         color = np.random.rand(3)
-    #         pcd.paint_uniform_color(color)
-    #         gem.append(pcd)
-    # o3d.visualization.draw_geometries(gem)
+    gem = []
+    folder = "./reference_models_processed/pot"  # Replace with the path to a specific folder to visualize
+    for file in os.listdir(folder):
+        if file.startswith("branch_") and file.endswith(".ply"):
+            pcd = o3d.io.read_point_cloud(os.path.join(folder, file))
+            color = np.random.rand(3)
+            pcd.paint_uniform_color(color)
+            gem.append(pcd)
+    o3d.visualization.draw_geometries(gem)
 
-    # pcd = o3d.io.read_point_cloud(os.path.join(folder, "skeletal_prior.ply"))
-    # o3d.visualization.draw_geometries([pcd])
+    pcd = o3d.io.read_point_cloud(os.path.join(folder, "skeletal_prior.ply"))
+    o3d.visualization.draw_geometries([pcd])
