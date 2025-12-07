@@ -3,3 +3,5 @@ reference_models_processed/
 checkpoint/
 checkpoint_1shot/
 train
+train2/
+train1/
