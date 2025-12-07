@@ -338,7 +338,7 @@ class BAE_NET_Wrapper:
         
         return predictions
     
-    def generate_mesh(self, voxels, threshold=0.4):
+    def generate_mesh(self, voxels, threshold=0.5):
         try:
             import mcubes
         except ImportError:
@@ -358,17 +358,25 @@ class BAE_NET_Wrapper:
             
             batch_size = 8192
             predictions = []
+            total_mesh = []
             
             for i in range(0, len(grid_points), batch_size):
                 batch = grid_points[i:i+batch_size]
                 batch_tensor = torch.FloatTensor(batch).to(self.device)
-                branch_pred, _ = self.model.generator(batch_tensor, z)
+                branch_pred, pred = self.model.generator(batch_tensor, z)
                 predictions.append(branch_pred.cpu().numpy())
+                total_mesh.append(pred.cpu().numpy())
+                # print(branch_pred.shape)
             
             predictions = np.concatenate(predictions, axis=0)
-            
+            # print(predictions.shape)
             predictions = predictions.reshape(dim, dim, dim, -1)
-            
+            # print(predictions.shape)
+            # print(pred.shape)
+            total_mesh = np.concatenate(total_mesh, axis=0)
+            total_mesh = total_mesh.reshape(dim, dim, dim)
+            # print(total_mesh.shape)
+            # teste
             all_vertices = []
             all_triangles = []
             
@@ -381,5 +389,11 @@ class BAE_NET_Wrapper:
                     vertices = vertices / dim - 0.5
                     all_vertices.append(vertices)
                     all_triangles.append(triangles)
+            total_vertices, total_triangles = mcubes.marching_cubes(
+                    total_mesh, 
+                    threshold
+                )
+            if len(total_vertices) > 0:
+                total_vertices = total_vertices / dim - 0.5
             
-            return all_vertices, all_triangles
+            return all_vertices, all_triangles, total_vertices, total_triangles
