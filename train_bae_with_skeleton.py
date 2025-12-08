@@ -22,6 +22,8 @@ python train_bae_with_skeleton_keypoints.py \
     --lr 1e-3
 """
 
+# 哪位大哥能帮我跑一下测试，我的电脑扑街了
+
 class Config:
     """
     Simple config object matching what BAE_NET_Wrapper._train_unsupervised expects.
