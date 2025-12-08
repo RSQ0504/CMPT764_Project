@@ -5,7 +5,7 @@ import torch
 import os
 import trimesh
 
-from model import Encoder3D, BAE_NET_Wrapper
+from model_revise_with_keypoint1 import Encoder3D, BAE_NET_Wrapper
 
 class Config:
     def __init__(self):
@@ -24,7 +24,7 @@ class Config:
 # z = encoder(x)
 # # print(z.shape)
 
-bae_net = BAE_NET_Wrapper(data_dir='./train/couch')
+bae_net = BAE_NET_Wrapper(data_dir='./data/train_with_skeleton/hand')
 # bae_net = BAE_NET_Wrapper(data_dir='./reference_models_processed/dog')
 config = Config()
 bae_net._train_unsupervised(config)

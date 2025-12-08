@@ -7,3 +7,6 @@ train2/
 train_with_skeleton/
 train1/
 data/
+*.ply
+*.npy
+*.pth

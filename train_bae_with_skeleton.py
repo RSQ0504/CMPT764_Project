@@ -5,12 +5,12 @@ import numpy as np
 import torch
 
 # load wrapper
-from model_revise_with_keypoints import BAE_NET_Wrapper  # make sure this file is in the same folder
+from model_revise_with_keypoint1 import BAE_NET_Wrapper  # make sure this file is in the same folder
 
 """
 Train BAE-Net (skeleton-aware version) on npz files that contain voxels,
 point samples, occupancy, and skeleton keypoints (junctions + endpoints).
-The model and wrapper are defined in model_revise_with_keypoints.py.
+The model and wrapper are defined in model_revise_with_keypoint1.py.
 """
 
 """

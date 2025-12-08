@@ -7,7 +7,7 @@ import trimesh
 import pyvista as pv
 
 
-from model_revise import Encoder3D, BAE_NET_Wrapper
+from model_revise_with_keypoint1 import Encoder3D, BAE_NET_Wrapper
 
 class Config:
     def __init__(self):
@@ -16,21 +16,23 @@ class Config:
         self.epoch = 200000
 
 
-bae_net = BAE_NET_Wrapper(data_dir='./data/reference_models_processed/hand')
+bae_net = BAE_NET_Wrapper(data_dir='./data/train_with_skeleton/hand')
 config = Config()
-bae_net.load_checkpoint("checkpoint/model_revised/hand256-5/checkpoint_epoch_100000.pth")
+bae_net.load_checkpoint("checkpoint/model_revised_keypoint/checkpoint_epoch_180000.pth")
 
 test_voxels = bae_net.data_voxels[0:1]
 test_points = bae_net.data_points[0]
+test_junctions = bae_net.data_junctions
+test_endpoints = bae_net.data_endpoints
 # print(test_voxels.shape, test_points.shape)
-predictions = bae_net.test_segmentation(test_points, test_voxels)
+predictions = bae_net.test_segmentation(test_points, test_voxels, test_junctions, test_endpoints)
 print(predictions.shape)
 np.save(os.path.join('segmentation.npy'), predictions)
 
 test_voxels = bae_net.data_voxels[:1]
 print(test_voxels.shape)
 
-vertices_list, triangles_list, all_vertices, all_triangles = bae_net.generate_mesh(test_voxels)
+vertices_list, triangles_list, all_vertices, all_triangles = bae_net.generate_mesh(test_voxels, test_junctions, test_endpoints)
 
 plotter = pv.Plotter()
 
