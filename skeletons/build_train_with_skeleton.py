@@ -8,7 +8,7 @@ from skimage import measure
 from branch_utils import (
     read_skeleton_segments,
 )
-from skeletons.skeleton_postprocess import get_clean_keypoints_from_segments
+from skeleton_postprocess import get_clean_keypoints_from_segments
 
 # Optional progress bar
 try:
@@ -278,14 +278,14 @@ def parse_args():
     parser.add_argument(
         "--train_root",
         type=str,
-        default="./train",
-        help="Root folder of training npz files (default: ./train).",
+        default="../data/reference_models_processed",
+        help="Root folder of training npz files (default: ../data/reference_models_processed).",
     )
     parser.add_argument(
         "--out_root",
         type=str,
-        default="./train_with_skeleton",
-        help="Output root folder (default: ./train_with_skeleton).",
+        default="../data/train_with_skeleton",
+        help="Output root folder (default: ../data/train_with_skeleton).",
     )
     parser.add_argument(
         "--skeleton_bin",
