@@ -13,6 +13,15 @@ point samples, occupancy, and skeleton keypoints (junctions + endpoints).
 The model and wrapper are defined in model_revise_with_keypoints.py.
 """
 
+"""
+Example usage:
+python train_bae_with_skeleton_keypoints.py \
+    --data_dir ./train_with_skeleton/couch \
+    --checkpoint_dir ./checkpoint/bae_skeleton_couch \
+    --epochs 200000 \
+    --lr 1e-3
+"""
+
 class Config:
     """
     Simple config object matching what BAE_NET_Wrapper._train_unsupervised expects.
