@@ -4,4 +4,6 @@ checkpoint/
 checkpoint_1shot/
 train
 train2/
+train_with_skeleton/
 train1/
+data/

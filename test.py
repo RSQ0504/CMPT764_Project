@@ -1,20 +1,50 @@
-import os
-import subprocess
-import trimesh
-import open3d as o3d
-import os
 import numpy as np
-import json
-import branch_utils as branch_utils
-gem = []
-folder = "./reference_models_processed/pot"
-for file in os.listdir(folder):
-    if file.startswith("branch_") and file.endswith(".ply"):
-        pcd = o3d.io.read_point_cloud(os.path.join(folder, file))
-        color = np.random.rand(3)
-        pcd.paint_uniform_color(color)
-        gem.append(pcd)
-o3d.visualization.draw_geometries(gem)
+import pyvista as pv
+from skimage import measure
+import torch
+import os
+import trimesh
+import pyvista as pv
 
-pcd = o3d.io.read_point_cloud(os.path.join(folder, "skeletal_prior.ply"))
-o3d.visualization.draw_geometries([pcd])
+
+from model_revise import Encoder3D, BAE_NET_Wrapper
+
+class Config:
+    def __init__(self):
+        self.learning_rate = 1e-3
+        self.beta1 = 0.9
+        self.epoch = 200000
+
+
+bae_net = BAE_NET_Wrapper(data_dir='./data/reference_models_processed/hand')
+config = Config()
+bae_net.load_checkpoint("checkpoint/model_revised/hand256-5/checkpoint_epoch_100000.pth")
+
+test_voxels = bae_net.data_voxels[0:1]
+test_points = bae_net.data_points[0]
+# print(test_voxels.shape, test_points.shape)
+predictions = bae_net.test_segmentation(test_points, test_voxels)
+print(predictions.shape)
+np.save(os.path.join('segmentation.npy'), predictions)
+
+test_voxels = bae_net.data_voxels[:1]
+print(test_voxels.shape)
+
+vertices_list, triangles_list, all_vertices, all_triangles = bae_net.generate_mesh(test_voxels)
+
+plotter = pv.Plotter()
+
+if vertices_list:
+    mesh = trimesh.Trimesh(vertices=all_vertices, faces=all_triangles)
+    plotter = pv.Plotter()
+    plotter.add_mesh(mesh, show_edges=True)
+    plotter.show()
+    plotter.close()
+    for i, (vertices, triangles) in enumerate(zip(vertices_list, triangles_list)):
+        mesh = trimesh.Trimesh(vertices=vertices, faces=triangles)
+        mesh.export(f'mesh_branch_{i}.ply')
+        print(f"Mesh branch {i} saved with {len(vertices)} vertices, {len(triangles)} faces")
+        plotter = pv.Plotter()
+        plotter.add_mesh(mesh, show_edges=True)
+        plotter.show()
+        plotter.close()

@@ -8,7 +8,7 @@ from skimage import measure
 from branch_utils import (
     read_skeleton_segments,
 )
-from skeleton_postprocess import get_clean_keypoints_from_segments
+from skeletons.skeleton_postprocess import get_clean_keypoints_from_segments
 
 # Optional progress bar
 try:
