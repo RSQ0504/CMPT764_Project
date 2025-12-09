@@ -753,30 +753,30 @@ class BAE_NET_Wrapper:
 
             # --- 4. Batch Inference ---
             batch_size = 8192
-            predictions = []
-            total_mesh = []
+            # predictions = []
+            # total_mesh = []
 
-            for i in range(0, len(grid_points), batch_size):
-                batch = grid_points[i:i + batch_size]
-                batch_tensor = torch.FloatTensor(batch).unsqueeze(0).to(self.device)
+            # for i in range(0, len(grid_points), batch_size):
+            #     batch = grid_points[i:i + batch_size]
+            #     batch_tensor = torch.FloatTensor(batch).unsqueeze(0).to(self.device)
 
-                branch_prob, total_prob = self._generator_infer(
-                    batch_tensor,
-                    z,
-                    j_tensor,
-                    e_tensor
-                )
+            #     branch_prob, total_prob = self._generator_infer(
+            #         batch_tensor,
+            #         z,
+            #         j_tensor,
+            #         e_tensor
+            #     )
 
-                # branch_prob: [1, B, K]
-                # total_prob : [1, B, 1]
-                predictions.append(branch_prob.squeeze(0).cpu().numpy())
-                total_mesh.append(total_prob.squeeze(0).cpu().numpy())
+            #     # branch_prob: [1, B, K]
+            #     # total_prob : [1, B, 1]
+            #     predictions.append(branch_prob.squeeze(0).cpu().numpy())
+            #     total_mesh.append(total_prob.squeeze(0).cpu().numpy())
 
-            predictions = np.concatenate(predictions, axis=0)
-            predictions = predictions.reshape(dim, dim, dim, -1)
+            # predictions = np.concatenate(predictions, axis=0)
+            # predictions = predictions.reshape(dim, dim, dim, -1)
 
-            total_mesh = np.concatenate(total_mesh, axis=0)
-            total_mesh = total_mesh.reshape(dim, dim, dim)
+            # total_mesh = np.concatenate(total_mesh, axis=0)
+            # total_mesh = total_mesh.reshape(dim, dim, dim)
 
             predictions = []
             total_mesh = []
@@ -801,6 +801,13 @@ class BAE_NET_Wrapper:
 
             predictions = predictions.reshape(dim, dim, dim, -1)
             total_mesh = total_mesh.reshape(dim, dim, dim)
+            
+            max_idx = np.argmax(predictions, axis=-1)
+            max_predictions = np.zeros_like(predictions)
+            dim_range = np.arange(predictions.shape[0])
+            x, y, z = np.ogrid[:predictions.shape[0], :predictions.shape[1], :predictions.shape[2]]
+            max_predictions[x, y, z, max_idx] = predictions[x, y, z, max_idx]
+            predictions = max_predictions
 
             all_vertices, all_triangles = [], []
             K = predictions.shape[-1]
