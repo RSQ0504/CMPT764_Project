@@ -21,9 +21,9 @@ class Config:
         self.epoch = 200000
 
 
-bae_net = BAE_NET_Wrapper(data_dir='data/train_with_skeleton/dog')
+bae_net = BAE_NET_Wrapper(data_dir='data/train_with_skeleton/pot')
 config = Config()
-bae_net.load_checkpoint("checkpoint/model_revised_keypoint/dog_6p/ckpt_epoch_620000.pth")
+bae_net.load_checkpoint("checkpoint/model_revised_keypoint/pot_6p/ckpt_epoch_1000000.pth")
 
 
 
@@ -85,13 +85,8 @@ vertices_list, triangles_list, _, _ = bae_net.generate_mesh(
 # plotter.show()
 # plotter.close()
 
-vertices_list, triangles_list, _, _ = bae_net.generate_mesh(
-    test_voxels,
-    junction_points=fixed_junc,
-    endpoint_points=fixed_end
-)
-
 meshes, dense_points, cuboids = process_segmentation_meshes(vertices_list, triangles_list)
-flat_cuboids = [c for cub_list in cuboids for c in cub_list]
+flat_cuboids = [c for cub_list in cuboids if cub_list is not None for c in cub_list]
+
 
 visualize_pointcloud_and_cuboid_subplots(dense_points, flat_cuboids)

@@ -12,29 +12,44 @@ def sample_points_from_mesh(mesh: trimesh.Trimesh, n_points=5000):
 
 
 
-def fit_cuboid(points: np.ndarray, eps=0.05, min_samples=10):
-
+def fit_cuboid(points: np.ndarray, eps=0.05, min_samples=10, ransac_iters=100):
     clustering = DBSCAN(eps=eps, min_samples=min_samples).fit(points)
     labels = clustering.labels_
-
     cuboids = []
+    
     unique_labels = [l for l in np.unique(labels) if l != -1]
-
+    
     for label in unique_labels:
         cluster_pts = points[labels == label]
-
-        aabb_min = cluster_pts.min(axis=0)
-        aabb_max = cluster_pts.max(axis=0)
-
-        cuboid = {
-            "min": aabb_min,
-            "max": aabb_max,
-            "center": (aabb_min + aabb_max) / 2,
-            "size": aabb_max - aabb_min,
-            "label": label
-        }
-        cuboids.append(cuboid)
-
+        
+        best_inliers = 0
+        best_cuboid = None
+        
+        for _ in range(ransac_iters):
+            if cluster_pts.shape[0] < 8:
+                sample_pts = cluster_pts
+            else:
+                sample_pts = cluster_pts[np.random.choice(cluster_pts.shape[0], 8, replace=False)]
+            
+            aabb_min = sample_pts.min(axis=0)
+            aabb_max = sample_pts.max(axis=0)
+            
+            inlier_mask = np.all((cluster_pts >= aabb_min) & (cluster_pts <= aabb_max), axis=1)
+            inliers = inlier_mask.sum()
+            
+            if inliers > best_inliers:
+                best_inliers = inliers
+                best_cuboid = {
+                    "min": aabb_min,
+                    "max": aabb_max,
+                    "center": (aabb_min + aabb_max) / 2,
+                    "size": aabb_max - aabb_min,
+                    "label": label
+                }
+        
+        if best_cuboid is not None:
+            cuboids.append(best_cuboid)
+    
     return cuboids
 
 
