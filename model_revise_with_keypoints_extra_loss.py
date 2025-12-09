@@ -244,7 +244,7 @@ class BAE_NET_Wrapper:
 
         self._load_data()
 
-        gf_split = 6
+        gf_split = 4
         self.model = BAE_Net(
             z_dim=128, ef_dim=32, gf_dim=256,
             gf_split=gf_split,
