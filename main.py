@@ -5,13 +5,13 @@ import torch
 import os
 import trimesh
 
-from model_revise_with_keypoint1 import Encoder3D, BAE_NET_Wrapper
+from model_revise_with_keypoints import Encoder3D, BAE_NET_Wrapper
 
 class Config:
     def __init__(self):
         self.learning_rate = 1e-3 
         self.beta1 = 0.9   
-        self.epoch = 200000  
+        self.epoch = 200001
 
 # npz_path = "./reference_models_processed/hand/voxel_and_sdf.npz"
 # data = np.load(npz_path)
@@ -24,8 +24,8 @@ class Config:
 # z = encoder(x)
 # # print(z.shape)
 
-bae_net = BAE_NET_Wrapper(data_dir='./data/train_with_skeleton/hand')
-# bae_net = BAE_NET_Wrapper(data_dir='./reference_models_processed/dog')
+# bae_net = BAE_NET_Wrapper(data_dir='./train_with_skeleton_new/sofa')
+bae_net = BAE_NET_Wrapper(data_dir='./train_with_skeleton_new/dog')
 config = Config()
 bae_net._train_unsupervised(config)
 
