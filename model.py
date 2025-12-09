@@ -45,21 +45,21 @@ class Generator(nn.Module):
         self.gf_split = gf_split
         self.L1reg = L1reg
         
-        self.fc1 = nn.Linear(z_dim + 3, 3072)
-        self.fc2 = nn.Linear(3072, 384)
-        
-        if L1reg:
-            self.fc3 = nn.Linear(384, 12)
-        else:
-            self.fc3 = nn.Linear(384, 12)
-            
-        # self.fc1 = nn.Linear(z_dim + 3, 1024)
-        # self.fc2 = nn.Linear(1024, 256)
+        # self.fc1 = nn.Linear(z_dim + 3, 3072)
+        # self.fc2 = nn.Linear(3072, 384)
         
         # if L1reg:
-        #     self.fc3 = nn.Linear(256, 6)
+        #     self.fc3 = nn.Linear(384, 12)
         # else:
-        #     self.fc3 = nn.Linear(256, 6)
+        #     self.fc3 = nn.Linear(384, 12)
+            
+        self.fc1 = nn.Linear(z_dim + 3, 1024)
+        self.fc2 = nn.Linear(1024, 256)
+        
+        if L1reg:
+            self.fc3 = nn.Linear(256, 4)
+        else:
+            self.fc3 = nn.Linear(256, 4)
         
     def forward(self, points, z):
         # points: [batch, 3]
@@ -373,6 +373,13 @@ class BAE_NET_Wrapper:
             predictions = predictions.reshape(dim, dim, dim, -1)
             # print(predictions.shape)
             # print(pred.shape)
+            max_idx = np.argmax(predictions, axis=-1)
+            max_predictions = np.zeros_like(predictions)
+            dim_range = np.arange(predictions.shape[0])
+            x, y, z = np.ogrid[:predictions.shape[0], :predictions.shape[1], :predictions.shape[2]]
+            max_predictions[x, y, z, max_idx] = predictions[x, y, z, max_idx]
+            predictions = max_predictions
+            
             total_mesh = np.concatenate(total_mesh, axis=0)
             total_mesh = total_mesh.reshape(dim, dim, dim)
             # print(total_mesh.shape)

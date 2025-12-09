@@ -7,7 +7,7 @@ import trimesh
 import pyvista as pv
 
 
-from model_revise import Encoder3D, BAE_NET_Wrapper
+from model import Encoder3D, BAE_NET_Wrapper
 
 class Config:
     def __init__(self):
@@ -16,12 +16,12 @@ class Config:
         self.epoch = 200000
 
 
-bae_net = BAE_NET_Wrapper(data_dir='data/reference_models_processed/sofa')
+bae_net = BAE_NET_Wrapper(data_dir='data/train/couch')
 config = Config()
-bae_net.load_checkpoint("checkpoint/model_revised/sofa256-4/checkpoint_epoch_190000.pth")
-
-test_voxels = bae_net.data_voxels[0:1]
-test_points = bae_net.data_points[0]
+bae_net.load_checkpoint("checkpoint/model/couch256_4/checkpoint_epoch_190000.pth")
+idx =5
+test_voxels = bae_net.data_voxels[idx:idx+1]
+test_points = bae_net.data_points[idx]
 # print(test_voxels.shape, test_points.shape)
 predictions = bae_net.test_segmentation(test_points, test_voxels)
 print(predictions.shape)
