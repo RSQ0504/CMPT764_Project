@@ -411,6 +411,12 @@ class BAE_NET_Wrapper:
 
             predictions = np.concatenate(predictions, axis=0)
             predictions = predictions.reshape(dim, dim, dim, -1)
+            max_idx = np.argmax(predictions, axis=-1)
+            max_predictions = np.zeros_like(predictions)
+            dim_range = np.arange(predictions.shape[0])
+            x, y, z = np.ogrid[:predictions.shape[0], :predictions.shape[1], :predictions.shape[2]]
+            max_predictions[x, y, z, max_idx] = predictions[x, y, z, max_idx]
+            predictions = max_predictions
 
             total_mesh = np.concatenate(total_mesh, axis=0)
             total_mesh = total_mesh.reshape(dim, dim, dim)
