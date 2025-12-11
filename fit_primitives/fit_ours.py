@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 
 
 
-from model_revise_with_keypoints_extra_loss import Encoder3D, BAE_NET_Wrapper
+from model_revise import Encoder3D, BAE_NET_Wrapper
 
 from .utils import process_segmentation_meshes
 from .utils import visualize_meshes_and_cuboid_subplots, evaluate_union_multiple_meshes
@@ -24,20 +24,20 @@ class Config:
 
 bae_net = BAE_NET_Wrapper(data_dir='data/train_with_skeleton/dog')
 config = Config()
-bae_net.load_checkpoint("checkpoint/model_revised_keypoint/dog_6p/ckpt_epoch_1000000.pth")
+bae_net.load_checkpoint("checkpoint/model_revised/dog256-4/checkpoint_epoch_190000.pth")
 idx = 0
 test_voxels = bae_net.data_voxels[idx:idx + 1]
 test_points = bae_net.data_points[idx]
 
 
-raw_junc = bae_net.data_junctions[idx]
-raw_end  = bae_net.data_endpoints[idx]
+# raw_junc = bae_net.data_junctions[idx]
+# raw_end  = bae_net.data_endpoints[idx]
 
-mask_j = np.abs(raw_junc[:, 0] - 10.0) > 1e-4
-mask_e = np.abs(raw_end[:, 0]  - 10.0) > 1e-4
+# mask_j = np.abs(raw_junc[:, 0] - 10.0) > 1e-4
+# mask_e = np.abs(raw_end[:, 0]  - 10.0) > 1e-4
 
-fixed_junc = raw_junc[mask_j]
-fixed_end  = raw_end[mask_e]
+# fixed_junc = raw_junc[mask_j]
+# fixed_end  = raw_end[mask_e]
 
 
 # predictions = bae_net.test_segmentation(
@@ -68,9 +68,7 @@ colors = ["red", "blue", "green", "yellow", "purple", "cyan", "orange"]
 
 
 vertices_list, triangles_list, _, _ = bae_net.generate_mesh(
-        test_voxels,
-        junction_points=fixed_junc,
-        endpoint_points=fixed_end
+        test_voxels
     )
 # plotter = pv.Plotter(title="Final Data Verification")
 
@@ -87,6 +85,6 @@ meshes, dense_points, cuboids = process_segmentation_meshes(vertices_list, trian
 flat_cuboids = [c for cub_list in cuboids if cub_list is not None for c in cub_list]
 
 
-# visualize_meshes_and_cuboid_subplots(meshes, flat_cuboids)
+visualize_meshes_and_cuboid_subplots(meshes, flat_cuboids)
 
 print(evaluate_union_multiple_meshes(meshes, flat_cuboids))
