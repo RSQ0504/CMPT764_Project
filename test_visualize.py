@@ -5,7 +5,7 @@ import os
 import trimesh
 
 # 引用你的模型文件
-from model_revise_with_keypoints import BAE_NET_Wrapper
+from Ours_model.model_revise_with_keypoints_extra_loss import BAE_NET_Wrapper
 # import numpy as np
 # import pyvista as pv
 def evaluate_gt_sdf_vs_voxel_iou(bae_net, shape_idx=0):
@@ -210,14 +210,11 @@ class Config:
 # ==========================================
 print("正在初始化 BAE_NET_Wrapper...")
 # 这里会自动调用你修改过的 _load_data (包含 Swap X-Y 和 Force Scale)
-bae_net = BAE_NET_Wrapper(data_dir='./train_with_skeleton_new/dog')
+bae_net = BAE_NET_Wrapper(data_dir='data/train_with_skeleton/hand')
 config = Config()
+bae_net.load_checkpoint("checkpoint/model_revised_keypoint/hand_4p/ckpt_epoch_500000.pth")
 
-checkpoint_path = "checkpoint/model_skeleton/ckpt_epoch_150000.pth"
-if os.path.exists(checkpoint_path):
-    bae_net.load_checkpoint(checkpoint_path)
-else:
-    print(f"[Error] Checkpoint not found: {checkpoint_path}")
+
 
 # ==========================================
 # 2. 获取数据 (Trust the Loader)

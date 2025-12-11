@@ -7,7 +7,7 @@ import trimesh
 import pyvista as pv
 
 
-from model import Encoder3D, BAE_NET_Wrapper
+from baseline_model.model_revise import Encoder3D, BAE_NET_Wrapper
 
 class Config:
     def __init__(self):
@@ -16,16 +16,16 @@ class Config:
         self.epoch = 200000
 
 
-bae_net = BAE_NET_Wrapper(data_dir='data/train/couch')
+bae_net = BAE_NET_Wrapper(data_dir='data/reference_models_processed/pot')
 config = Config()
-bae_net.load_checkpoint("checkpoint/model/couch256_4/checkpoint_epoch_190000.pth")
-idx =5
+bae_net.load_checkpoint("checkpoint/model_revised/pot256-4/checkpoint_epoch_200000.pth")
+idx = 0
 test_voxels = bae_net.data_voxels[idx:idx+1]
 test_points = bae_net.data_points[idx]
 # print(test_voxels.shape, test_points.shape)
 predictions = bae_net.test_segmentation(test_points, test_voxels)
 print(predictions.shape)
-np.save(os.path.join('segmentation.npy'), predictions)
+# np.save(os.path.join('segmentation.npy'), predictions)
 
 test_voxels = bae_net.data_voxels[:1]
 print(test_voxels.shape)
@@ -56,7 +56,7 @@ if vertices_list:
 
         if vertices is not None and len(vertices) > 0:
             mesh = trimesh.Trimesh(vertices=vertices, faces=triangles)
-            mesh.export(f'mesh_branch_{i}.ply')
+            # mesh.export(f'mesh_branch_{i}.ply')
             print(f"  - Branch {i}: {len(vertices)} verts")
             plotter.add_mesh(mesh, color=colors[i % len(colors)], show_edges=False)
         else:

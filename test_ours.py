@@ -7,7 +7,7 @@ import trimesh
 import pyvista as pv
 
 
-from model_revise_with_keypoint1 import Encoder3D, BAE_NET_Wrapper
+from Ours_model.model_revise_with_keypoints_extra_loss import Encoder3D, BAE_NET_Wrapper
 
 class Config:
     def __init__(self):
@@ -27,7 +27,7 @@ test_endpoints = bae_net.data_endpoints
 # print(test_voxels.shape, test_points.shape)
 predictions = bae_net.test_segmentation(test_points, test_voxels, test_junctions, test_endpoints)
 print(predictions.shape)
-np.save(os.path.join('segmentation.npy'), predictions)
+# np.save(os.path.join('segmentation.npy'), predictions)
 
 test_voxels = bae_net.data_voxels[:1]
 print(test_voxels.shape)
@@ -44,7 +44,7 @@ if vertices_list:
     plotter.close()
     for i, (vertices, triangles) in enumerate(zip(vertices_list, triangles_list)):
         mesh = trimesh.Trimesh(vertices=vertices, faces=triangles)
-        mesh.export(f'mesh_branch_{i}.ply')
+        # mesh.export(f'mesh_branch_{i}.ply')
         print(f"Mesh branch {i} saved with {len(vertices)} vertices, {len(triangles)} faces")
         plotter = pv.Plotter()
         plotter.add_mesh(mesh, show_edges=True)

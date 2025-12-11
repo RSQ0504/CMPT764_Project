@@ -278,14 +278,14 @@ def parse_args():
     parser.add_argument(
         "--train_root",
         type=str,
-        default="../data/reference_models_processed",
-        help="Root folder of training npz files (default: ../data/reference_models_processed).",
+        default="../data/2025_test_models_processed",
+        help="Root folder of training npz files (default: ../data/2025_test_models_processed).",
     )
     parser.add_argument(
         "--out_root",
         type=str,
-        default="../data/train_with_skeleton",
-        help="Output root folder (default: ../data/train_with_skeleton).",
+        default="../data/train_with_skeleton_test_data",
+        help="Output root folder (default: ../data/train_with_skeleton_test_data).",
     )
     parser.add_argument(
         "--skeleton_bin",

@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 
 
 
-from model_revise import Encoder3D, BAE_NET_Wrapper
+from baseline_model.model_revise import Encoder3D, BAE_NET_Wrapper
 
 from .utils import process_segmentation_meshes
 from .utils import visualize_meshes_and_cuboid_subplots, evaluate_union_multiple_meshes
