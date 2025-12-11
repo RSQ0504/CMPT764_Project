@@ -22,7 +22,7 @@ class Config:
         self.epoch = 200000
 
 
-bae_net = BAE_NET_Wrapper(data_dir='data/train_with_skeleton/dog')
+bae_net = BAE_NET_Wrapper(data_dir='data/train_with_skeleton/dog', gf_split=4)
 config = Config()
 bae_net.load_checkpoint("checkpoint/model_revised_keypoint/dog_6p/ckpt_epoch_1000000.pth")
 idx = 0

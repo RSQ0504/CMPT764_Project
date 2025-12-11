@@ -16,7 +16,7 @@ class Config:
         self.epoch = 200000
 
 
-bae_net = BAE_NET_Wrapper(data_dir='data/reference_models_processed/pot')
+bae_net = BAE_NET_Wrapper(data_dir='data/reference_models_processed/pot', gf_split=4)
 config = Config()
 bae_net.load_checkpoint("checkpoint/model_revised/pot256-4/checkpoint_epoch_200000.pth")
 idx = 0

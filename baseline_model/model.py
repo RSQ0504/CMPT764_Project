@@ -57,9 +57,9 @@ class Generator(nn.Module):
         self.fc2 = nn.Linear(1024, 256)
         
         if L1reg:
-            self.fc3 = nn.Linear(256, 4)
+            self.fc3 = nn.Linear(256, gf_split)
         else:
-            self.fc3 = nn.Linear(256, 4)
+            self.fc3 = nn.Linear(256, gf_split)
         
     def forward(self, points, z):
         # points: [batch, 3]
@@ -122,7 +122,7 @@ class BAE_NET_Wrapper:
                  L1reg=True,
                  checkpoint_dir='checkpoint', 
                  sample_dir='samples',
-                 data_dir='./data'):
+                 data_dir='./data', gf_split=4):
         
 
         self.L1reg = L1reg
@@ -132,7 +132,6 @@ class BAE_NET_Wrapper:
         
         # Load data
         self._load_data()
-        gf_split = 4
         
         self.model = BAE_Net(
             z_dim=128, ef_dim=32, gf_dim=256, 

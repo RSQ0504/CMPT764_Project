@@ -235,7 +235,7 @@ class BAE_NET_Wrapper:
                  L1reg=True,
                  checkpoint_dir='checkpoint/model_skeleton',
                  sample_dir='samples_skeleton',
-                 data_dir='./data'):
+                 data_dir='./data', gf_split=4):
 
         self.L1reg = L1reg
         self.checkpoint_dir = checkpoint_dir
@@ -244,7 +244,6 @@ class BAE_NET_Wrapper:
 
         self._load_data()
 
-        gf_split = 6
         self.model = BAE_Net(
             z_dim=128, ef_dim=32, gf_dim=256,
             gf_split=gf_split,

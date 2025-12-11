@@ -210,7 +210,7 @@ class Config:
 # ==========================================
 print("正在初始化 BAE_NET_Wrapper...")
 # 这里会自动调用你修改过的 _load_data (包含 Swap X-Y 和 Force Scale)
-bae_net = BAE_NET_Wrapper(data_dir='data/train_with_skeleton/hand')
+bae_net = BAE_NET_Wrapper(data_dir='data/train_with_skeleton/hand', gf_split=4)
 config = Config()
 bae_net.load_checkpoint("checkpoint/model_revised_keypoint/hand_4p/ckpt_epoch_500000.pth")
 

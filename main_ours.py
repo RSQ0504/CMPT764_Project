@@ -25,7 +25,7 @@ class Config:
 # # print(z.shape)
 
 # bae_net = BAE_NET_Wrapper(data_dir='./train_with_skeleton_new/sofa')
-bae_net = BAE_NET_Wrapper(data_dir='data/reference_models_processed/hand',checkpoint_dir='checkpoint/model_revised/hand256-4',)
+bae_net = BAE_NET_Wrapper(data_dir='data/reference_models_processed/hand',checkpoint_dir='checkpoint/model_revised/hand256-4', gf_split=4)
 config = Config()
 bae_net._train_unsupervised(config)
 

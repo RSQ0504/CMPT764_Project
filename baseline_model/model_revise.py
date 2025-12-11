@@ -140,7 +140,7 @@ class BAE_NET_Wrapper:
                  L1reg=True,
                  checkpoint_dir='checkpoint/model_revised',
                  sample_dir='samples',
-                 data_dir='./data'):
+                 data_dir='./data', gf_split=4):
 
         self.L1reg = L1reg
         self.checkpoint_dir = checkpoint_dir
@@ -149,9 +149,6 @@ class BAE_NET_Wrapper:
 
         # Load data
         self._load_data()
-
-        # Default split set to 4 as requested
-        gf_split = 4
 
         self.model = BAE_Net(
             z_dim=128, ef_dim=32, gf_dim=256,
