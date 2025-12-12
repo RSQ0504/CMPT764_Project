@@ -204,12 +204,11 @@ class NET_Wrapper:
                 elif 'sdf_values' in data:
                     occ = (data['sdf_values'] <= 0).astype(np.float32)
                 else:
-                    print(f"⚠️ {npz_name}: 缺少 occu_values/sdf_values，跳过")
                     continue
 
                 dim = vox.shape[0]
                 coords = (pts + 1.0) / 2.0
-                idx_pts = np.clip((coords * (dim - 1)).astype(np.int32), 0, dim - 1)  # ★ 改名
+                idx_pts = np.clip((coords * (dim - 1)).astype(np.int32), 0, dim - 1)
                 xi, yi, zi = idx_pts[:, 0], idx_pts[:, 1], idx_pts[:, 2]
                 occ_vox = vox[xi, yi, zi].astype(np.float32)
 
@@ -219,8 +218,6 @@ class NET_Wrapper:
                 e_pts = np.asarray(data["endpoint_points"], dtype=np.float32) \
                     if "endpoint_points" in keys else np.zeros((0, 3), dtype=np.float32)
 
-                if file_idx < 3: 
-                    print(f"\n📄 文件: {npz_name}")
 
                 inside_pts = pts[occ > 0.5]
                 if len(inside_pts) == 0:

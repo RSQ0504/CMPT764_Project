@@ -4,24 +4,21 @@ import torch
 import os
 import trimesh
 
-# 引用你的模型文件
 from Ours_model.model_revise_with_keypoints_extra_loss import NET_Wrapper
 # import numpy as np
 # import pyvista as pv
 def evaluate_gt_sdf_vs_voxel_iou(bae_net, shape_idx=0):
-    pts = bae_net.data_points[shape_idx]          # [N,3]  SDF 采样点
+    pts = bae_net.data_points[shape_idx]         
     occ_sdf = bae_net.data_occupancy[shape_idx]   # [N,]   SDF-based occupancy (0/1)
 
     vox = bae_net.data_voxels[shape_idx]          # [64,64,64]
     dim = vox.shape[0]
 
-    # [-1,1] -> [0, dim-1] 映射到 voxel 索引
     coords = (pts + 1.0) / 2.0
     idx = np.clip((coords * (dim - 1)).astype(np.int32), 0, dim - 1)
     x, y, z = idx[:, 0], idx[:, 1], idx[:, 2]
 
-    occ_vox = vox[x, y, z].astype(np.int32)       # 在同一批 SDF 点上，用 voxel 定义采 GT
-
+    occ_vox = vox[x, y, z].astype(np.int32)       
     gt_sdf = occ_sdf.astype(np.int32)
     gt_vox = occ_vox
 

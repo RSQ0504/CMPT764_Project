@@ -205,7 +205,7 @@ class NET_Wrapper:
 
                 dim = vox.shape[0]
                 coords = (pts + 1.0) / 2.0
-                idx_pts = np.clip((coords * (dim - 1)).astype(np.int32), 0, dim - 1)  # ★ 改名
+                idx_pts = np.clip((coords * (dim - 1)).astype(np.int32), 0, dim - 1)
                 xi, yi, zi = idx_pts[:, 0], idx_pts[:, 1], idx_pts[:, 2]
                 occ_vox = vox[xi, yi, zi].astype(np.float32)
 
