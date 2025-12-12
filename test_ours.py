@@ -16,23 +16,33 @@ class Config:
         self.epoch = 200000
 
 
-bae_net = BAE_NET_Wrapper(data_dir='./data/train_with_skeleton/hand', gf_split=4)
+bae_net = BAE_NET_Wrapper(data_dir='data/train_with_skeleton_test_data/chair', gf_split=4)
 config = Config()
-bae_net.load_checkpoint("checkpoint/model_revised_keypoint/checkpoint_epoch_180000.pth")
+bae_net.load_checkpoint("checkpoint/ours/chair_4p/ckpt_epoch_200000.pth")
 
-test_voxels = bae_net.data_voxels[0:1]
-test_points = bae_net.data_points[0]
-test_junctions = bae_net.data_junctions
-test_endpoints = bae_net.data_endpoints
+idx = 0
+test_voxels = bae_net.data_voxels[idx:idx + 1]
+test_points = bae_net.data_points[idx]
+
+
+raw_junc = bae_net.data_junctions[idx]
+raw_end  = bae_net.data_endpoints[idx]
+
+mask_j = np.abs(raw_junc[:, 0] - 10.0) > 1e-4
+mask_e = np.abs(raw_end[:, 0]  - 10.0) > 1e-4
+
+fixed_junc = raw_junc[mask_j]
+fixed_end  = raw_end[mask_e]
+
 # print(test_voxels.shape, test_points.shape)
-predictions = bae_net.test_segmentation(test_points, test_voxels, test_junctions, test_endpoints)
+predictions = bae_net.test_segmentation(test_points, test_voxels, junction_points = fixed_junc, endpoint_points = fixed_end)
 print(predictions.shape)
 # np.save(os.path.join('segmentation.npy'), predictions)
 
 test_voxels = bae_net.data_voxels[:1]
 print(test_voxels.shape)
 
-vertices_list, triangles_list, all_vertices, all_triangles = bae_net.generate_mesh(test_voxels, test_junctions, test_endpoints)
+vertices_list, triangles_list, all_vertices, all_triangles = bae_net.generate_mesh(test_voxels, fixed_junc, fixed_end)
 
 plotter = pv.Plotter()
 
