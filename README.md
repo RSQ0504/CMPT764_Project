@@ -7,4 +7,4 @@ pip install torch==2.6.0 torchvision==0.21.0 torchaudio==2.6.0 --index-url https
 pip install -r requirements.txt
 ```
 ## Weight Download
-https://drive.google.com/file/d/1LFsp6YX1fkL9T7QPKAFSpnzFW00nykRS/view?usp=sharing
+[https://drive.google.com/file/d/1LFsp6YX1fkL9T7QPKAFSpnzFW00nykRS/view?usp=sharing](https://drive.google.com/file/d/1LFsp6YX1fkL9T7QPKAFSpnzFW00nykRS/view?usp=sharing)
