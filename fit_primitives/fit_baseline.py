@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 
 
 
-from baseline_model.model_revise import Encoder3D, BAE_NET_Wrapper
+from baseline_model.model_revise import Encoder3D, NET_Wrapper
 
 from .utils import process_segmentation_meshes
 from .utils import visualize_meshes_and_cuboid_subplots, evaluate_union_multiple_meshes
@@ -22,17 +22,16 @@ class Config:
         self.epoch = 200000
 
 
-bae_net = BAE_NET_Wrapper(data_dir='data/train_with_skeleton/hand', gf_split=4)
+net_wrapper = NET_Wrapper(data_dir='data/train_with_skeleton/rod', gf_split=2)
 config = Config()
-bae_net.load_checkpoint("checkpoint/model_revised/hand256-4/checkpoint_epoch_190000.pth")
+net_wrapper.load_checkpoint("checkpoint/ablation/model_baseline_with extra_loss_rod_2/checkpoint_epoch_500000.pth")
 idx = 0
-test_voxels = bae_net.data_voxels[idx:idx + 1]
-test_points = bae_net.data_points[idx]
+test_voxels = net_wrapper.data_voxels[idx:idx + 1]
+test_points = net_wrapper.data_points[idx]
 
 
-# raw_junc = bae_net.data_junctions[idx]
-# raw_end  = bae_net.data_endpoints[idx]
-
+# raw_junc = net_wrapper.data_junctions[idx]
+# raw_end  = net_wrapper.data_endpoints[idx]
 # mask_j = np.abs(raw_junc[:, 0] - 10.0) > 1e-4
 # mask_e = np.abs(raw_end[:, 0]  - 10.0) > 1e-4
 
@@ -67,7 +66,7 @@ test_points = bae_net.data_points[idx]
 colors = ["red", "blue", "green", "yellow", "purple", "cyan", "orange"]
 
 
-vertices_list, triangles_list, _, _ = bae_net.generate_mesh(
+vertices_list, triangles_list, _, _ = net_wrapper.generate_mesh(
         test_voxels
     )
 # plotter = pv.Plotter(title="Final Data Verification")

@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 
 
 
-from Ours_model.model_revise_with_keypoint1 import Encoder3D, BAE_NET_Wrapper
+from Ours_model.model_revise_with_keypoint1 import Encoder3D, NET_Wrapper
 
 from .utils import process_segmentation_meshes
 from .utils import visualize_meshes_and_cuboid_subplots, evaluate_union_multiple_meshes
@@ -22,25 +22,24 @@ class Config:
         self.epoch = 200000
 
 
-bae_net = BAE_NET_Wrapper(data_dir='data/train_with_skeleton/hand', gf_split=4)
+net = NET_Wrapper(data_dir='data/train_with_skeleton/rod', gf_split=2)
 config = Config()
-bae_net.load_checkpoint("checkpoint/ablation/baseline_model_keypoint_without_embedded_with_loss_hand_4pec/checkpoint_epoch_500000.pth")
+net.load_checkpoint("checkpoint/ablation/baseline_model_keypoint_without_embedded_with_loss_rod_2pec/checkpoint_epoch_500000.pth")
 idx = 0
-test_voxels = bae_net.data_voxels[idx:idx + 1]
-test_points = bae_net.data_points[idx]
+test_voxels = net.data_voxels[idx:idx + 1]
+test_points = net.data_points[idx]
 
 
-# raw_junc = bae_net.data_junctions[idx]
-# raw_end  = bae_net.data_endpoints[idx]
-
+# raw_junc = net.data_junctions[idx]
+# raw_end  = net.data_endpoints[idx]    
 # mask_j = np.abs(raw_junc[:, 0] - 10.0) > 1e-4
 # mask_e = np.abs(raw_end[:, 0]  - 10.0) > 1e-4
 
-fixed_junc = bae_net.data_junctions
-fixed_end  = bae_net.data_endpoints
+fixed_junc = net.data_junctions
+fixed_end  = net.data_endpoints
 
 
-# predictions = bae_net.test_segmentation(
+# predictions = net.test_segmentation(
 #     test_points,
 #     test_voxels,
 #     junction_points=fixed_junc,
@@ -67,7 +66,7 @@ fixed_end  = bae_net.data_endpoints
 colors = ["red", "blue", "green", "yellow", "purple", "cyan", "orange"]
 
 
-vertices_list, triangles_list, _, _ = bae_net.generate_mesh(
+vertices_list, triangles_list, _, _ = net.generate_mesh(
         test_voxels,
         fixed_junc,
         fixed_end

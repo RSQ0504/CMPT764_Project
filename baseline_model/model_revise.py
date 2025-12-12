@@ -1,4 +1,3 @@
-# file: model_revise.py
 import os
 import numpy as np
 import torch
@@ -103,9 +102,9 @@ class Generator(nn.Module):
         return h3, h3_max
 
 
-class BAE_Net(nn.Module):
+class Net(nn.Module):
     def __init__(self, z_dim=128, ef_dim=32, gf_dim=256, gf_split=4, L1reg=False):
-        super(BAE_Net, self).__init__()
+        super(Net, self).__init__()
         self.z_dim = z_dim
         self.ef_dim = ef_dim
         self.gf_dim = gf_dim
@@ -135,7 +134,7 @@ class BAE_Net(nn.Module):
                 raise ValueError("In inference mode, points must be provided")
 
 
-class BAE_NET_Wrapper:
+class NET_Wrapper:
     def __init__(self,
                  L1reg=True,
                  checkpoint_dir='checkpoint/model_revised',
@@ -150,7 +149,7 @@ class BAE_NET_Wrapper:
         # Load data
         self._load_data()
 
-        self.model = BAE_Net(
+        self.model = Net(
             z_dim=128, ef_dim=32, gf_dim=256,
             gf_split=gf_split,
             L1reg=L1reg

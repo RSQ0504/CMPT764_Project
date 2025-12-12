@@ -5,13 +5,13 @@ import torch
 import os
 import trimesh
 
-from Ours_model.model_revise_with_keypoints_extra_loss import Encoder3D, BAE_NET_Wrapper
+from Ours_model.model_revise_with_keypoints_extra_loss import Encoder3D, NET_Wrapper
 
 class Config:
     def __init__(self):
         self.learning_rate = 1e-3 
         self.beta1 = 0.9   
-        self.epoch = 200001
+        self.epoch = 500001
 
 # npz_path = "./reference_models_processed/hand/voxel_and_sdf.npz"
 # data = np.load(npz_path)
@@ -25,19 +25,19 @@ class Config:
 # # print(z.shape)
 
 # bae_net = BAE_NET_Wrapper(data_dir='./train_with_skeleton_new/sofa')
-bae_net = BAE_NET_Wrapper(data_dir='data/reference_models_processed/hand',checkpoint_dir='checkpoint/model_revised/hand256-4', gf_split=4)
+net = NET_Wrapper(data_dir='data/train_with_skeleton_test_data/chair',checkpoint_dir='checkpoint/ours/chair_5p', gf_split=5)
 config = Config()
-bae_net._train_unsupervised(config)
+net._train_unsupervised(config)
 
-# test_voxels = bae_net.data_voxels[1:2]
-# test_points = bae_net.data_points[1]
+# test_voxels = net.data_voxels[1:2]
+# test_points = net.data_points[1]
 # # print(test_voxels.shape, test_points.shape)
-# predictions = bae_net.test_segmentation(test_points, test_voxels)
+# predictions = net.test_segmentation(test_points, test_voxels)
 # np.save(os.path.join('segmentation.npy'), predictions)
 #
-# test_voxels = bae_net.data_voxels[:1]
+# test_voxels = net.data_voxels[:1]
 #
-# vertices_list, triangles_list = bae_net.generate_mesh(test_voxels)
+# vertices_list, triangles_list = net.generate_mesh(test_voxels)
 #
 # if vertices_list:
 #     for i, (vertices, triangles) in enumerate(zip(vertices_list, triangles_list)):

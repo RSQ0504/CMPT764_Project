@@ -5,11 +5,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 from tqdm import tqdm
 
-USE_SKELETON = True  # 默认 True，做实验 A 的时候改成 False
+USE_SKELETON = True
 
-# ==========================================
-# Helper Function: Weight Initialization
-# ==========================================
+
 def weights_init(m):
     classname = m.__class__.__name__
     if isinstance(m, nn.Linear):
@@ -28,10 +26,6 @@ def weights_init(m):
         if m.bias is not None:
             nn.init.constant_(m.bias.data, 0.0)
 
-
-# ==========================================
-# Encoder (Standard 3D CNN)
-# ==========================================
 class Encoder3D(nn.Module):
     def __init__(self, z_dim=128, ef_dim=32):
         super(Encoder3D, self).__init__()
@@ -62,9 +56,7 @@ class Encoder3D(nn.Module):
         return x.view(-1, self.z_dim)
 
 
-# ==========================================
-# Generator (Corrected: Inject Skeleton Features Early)
-# ==========================================
+
 class Generator(nn.Module):
     def __init__(self, z_dim=128, gf_dim=256, gf_split=4, L1reg=False):
         super(Generator, self).__init__()
@@ -87,12 +79,7 @@ class Generator(nn.Module):
         self.fc3 = nn.Linear(gf_dim, gf_split)
 
     def compute_min_distance(self, query_points, keypoints):
-        """
-        Compute Euclidean distance from query_points to the nearest keypoints.
-        query_points: [B, N, 3]
-        keypoints:    [B, K, 3]
-        Return:       [B, N, 1]
-        """
+
         if keypoints.size(1) == 0:
             return torch.ones(query_points.shape[0], query_points.shape[1], 1).to(query_points.device)
 
@@ -110,76 +97,24 @@ class Generator(nn.Module):
             z = z.expand(B, -1)
         z_expanded = z.unsqueeze(1).expand(-1, N, -1)  # [B,N,z_dim]
 
-        # 2. 第一层
         pointz = torch.cat([points, z_expanded], dim=2)  # [B,N,z_dim+3]
         h1 = F.leaky_relu(self.fc1(pointz), 0.02)  # [B,N,4*gf_dim]
 
-        # 3. 骨骼距离
         if USE_SKELETON and (junction_points is not None) and (endpoint_points is not None):
-            # 正常用骨骼：真实距离特征
             d_junc = self.compute_min_distance(points, junction_points)  # [B,N,1]
             d_end = self.compute_min_distance(points, endpoint_points)  # [B,N,1]
             h1_aug = torch.cat([h1, d_junc, d_end], dim=2)  # [B,N,4*gf_dim+2]
         else:
-            # 不用骨骼：用常数填充，所有点/shape 完全一样 → 不提供任何有用信息
             dummy = torch.ones(B, N, 1, device=points.device) * 10.0
             h1_aug = torch.cat([h1, dummy, dummy], dim=2)
 
-        # 4. 第二层
         h2 = F.leaky_relu(self.fc2(h1_aug), 0.02)  # [B,N,gf_dim]
 
-        # 5. 输出 logits（每个分支一个 logit）
         logits = self.fc3(h2)  # [B,N,K]
         return logits
-    # def forward(self, points, z, junction_points=None, endpoint_points=None):
-    #     # points: [B, N, 3]
-    #     # z: [B, z_dim]
-    #
-    #     batch_size = points.shape[0]
-    #     num_points = points.shape[1]
-    #
-    #     # 1. Expand Z
-    #     if z.dim() == 1: z = z.unsqueeze(0)
-    #     if z.shape[0] == 1 and batch_size > 1: z = z.expand(batch_size, -1)
-    #     z_expanded = z.unsqueeze(1).expand(-1, num_points, -1)  # [B, N, z_dim]
-    #
-    #     # 2. Layer 1 Forward
-    #     pointz = torch.cat([points, z_expanded], dim=2)  # [B, N, z_dim+3]
-    #     h1 = F.leaky_relu(self.fc1(pointz), 0.02)  # [B, N, gf_dim*4]
-    #
-    #     # 3. Skeleton Distance Injection
-    #     if junction_points is not None and endpoint_points is not None:
-    #         d_junc = self.compute_min_distance(points, junction_points)  # [B, N, 1]
-    #         d_end = self.compute_min_distance(points, endpoint_points)  # [B, N, 1]
-    #
-    #         # Concatenate to h1
-    #         h1_aug = torch.cat([h1, d_junc, d_end], dim=2)  # [B, N, gf_dim*4 + 2]
-    #     else:
-    #         # Fallback: Create dummy distance (large value) to keep dimensions correct
-    #         dummy_dist = torch.ones(batch_size, num_points, 1).to(points.device) * 10.0
-    #         h1_aug = torch.cat([h1, dummy_dist, dummy_dist], dim=2)
-    #
-    #     # 4. Layer 2 Forward
-    #     h2 = F.leaky_relu(self.fc2(h1_aug), 0.02)  # [B, N, gf_dim]
-    #
-    #     # 5. Layer 3 Forward (Output)
-    #     logits = self.fc3(h2)
-    #     logits_max, _ = torch.max(logits, dim=2, keepdim=True)
-    #     h3 = torch.sigmoid(logits)
-    #
-    #     # h3 = torch.sigmoid(self.fc3(h2))  # [B, N, gf_split]
-    #     #
-    #     h3_max = torch.max(h3, dim=2, keepdim=True)[0]
-    #
-    #     return logits_max, h3_max
-
-
-# ==========================================
-# BAE_Net Model Wrapper
-# ==========================================
-class BAE_Net(nn.Module):
+class Net(nn.Module):
     def __init__(self, z_dim=128, ef_dim=32, gf_dim=256, gf_split=4, L1reg=False):
-        super(BAE_Net, self).__init__()
+        super(Net, self).__init__()
         self.z_dim = z_dim
         self.ef_dim = ef_dim
         self.gf_dim = gf_dim
@@ -203,34 +138,13 @@ class BAE_Net(nn.Module):
         logits_max, _ = torch.max(logits, dim=2, keepdim=True)  # [B,N,1]
 
         if mode == 'train':
-            # 训练：用 max-logit 做 BCEWithLogits，保留 branch_logits 以后可 debug
             return logits, logits_max
         else:
-            # 推理：返回概率
             branch_probs = torch.sigmoid(logits)  # [B,N,K]
             occ_probs = torch.sigmoid(logits_max)  # [B,N,1]
             return branch_probs, occ_probs
-    # def forward(self, voxels, points=None, junction_points=None, endpoint_points=None, mode='train'):
-    #     z = self.encoder(voxels)
-    #
-    #     if mode == 'train':
-    #         if points is not None:
-    #             branch_pred, G = self.generator(points, z, junction_points, endpoint_points)
-    #             return branch_pred, G
-    #         else:
-    #             raise ValueError("In training mode, points must be provided")
-    #     else:  # inference
-    #         if points is not None:
-    #             branch_pred, occupancy = self.generator(points, z, junction_points, endpoint_points)
-    #             return branch_pred, occupancy
-    #         else:
-    #             raise ValueError("In inference mode, points must be provided")
 
-
-# ==========================================
-# Training Wrapper & Data Loader
-# ==========================================
-class BAE_NET_Wrapper:
+class NET_Wrapper:
     def __init__(self,
                  L1reg=True,
                  checkpoint_dir='checkpoint/model_skeleton',
@@ -244,7 +158,7 @@ class BAE_NET_Wrapper:
 
         self._load_data()
 
-        self.model = BAE_Net(
+        self.model = Net(
             z_dim=128, ef_dim=32, gf_dim=256,
             gf_split=gf_split,
             L1reg=L1reg
@@ -256,16 +170,13 @@ class BAE_NET_Wrapper:
         self.model.to(self.device)
 
     def _load_data(self):
-        print(f"\n{'=' * 20} 开始加载数据 (DEBUG模式) {'=' * 20}")
-        print(f"数据目录: {self.data_dir}")
+
 
         if not os.path.exists(self.data_dir):
-            print("❌ 目录不存在")
             return
 
         files = [f for f in os.listdir(self.data_dir) if f.endswith('.npz')]
         if not files:
-            print("❌ 目录下没有 .npz 文件")
             self.data_voxels = np.zeros((0, 64, 64, 64))
             self.data_points = np.zeros((0, 100, 3))
             return
@@ -277,52 +188,41 @@ class BAE_NET_Wrapper:
         junction_list = []
         endpoint_list = []
 
-        for file_idx, npz_name in enumerate(files):  # ★ 用 file_idx 表示第几个文件
+        for file_idx, npz_name in enumerate(files): 
             full_path = os.path.join(self.data_dir, npz_name)
             try:
                 data = np.load(full_path)
 
-                # --- 1. 读取基础数据 ---
-                vox = data['voxels']  # [64,64,64]
-                pts = data['sdf_points']  # [N,3]
+                vox = data['voxels']  
+                pts = data['sdf_points'] 
 
-                # SDF-based occupancy
                 if 'occu_values' in data:
                     occ = data['occu_values']
                 elif 'sdf_values' in data:
                     occ = (data['sdf_values'] <= 0).astype(np.float32)
                 else:
-                    print(f"⚠️ {npz_name}: 缺少 occu_values/sdf_values，跳过")
                     continue
 
-                # --- 1b. voxel-based occupancy (在同一批 pts 上采样) ---
                 dim = vox.shape[0]
                 coords = (pts + 1.0) / 2.0
                 idx_pts = np.clip((coords * (dim - 1)).astype(np.int32), 0, dim - 1)  # ★ 改名
                 xi, yi, zi = idx_pts[:, 0], idx_pts[:, 1], idx_pts[:, 2]
                 occ_vox = vox[xi, yi, zi].astype(np.float32)
 
-                # --- 2. 骨骼 ---
                 keys = list(data.files)
                 j_pts = np.asarray(data["junction_points"], dtype=np.float32) \
                     if "junction_points" in keys else np.zeros((0, 3), dtype=np.float32)
                 e_pts = np.asarray(data["endpoint_points"], dtype=np.float32) \
                     if "endpoint_points" in keys else np.zeros((0, 3), dtype=np.float32)
 
-                if file_idx < 3:  # ★ 这里用 file_idx，而不是 idx_pts
-                    print(f"\n📄 文件: {npz_name}")
-
-                # 3. 尺度/对齐 debug 同你原来的逻辑，这里略写：
                 inside_pts = pts[occ > 0.5]
                 if len(inside_pts) == 0:
-                    print("  ⚠️ 警告: 该物体没有内部点")
                     c_scale = 1.0
                     c_center = np.zeros(3)
                 else:
                     c_min, c_max = np.min(inside_pts, axis=0), np.max(inside_pts, axis=0)
                     c_scale = np.max(c_max - c_min)
                     c_center = (c_min + c_max) / 2.0
-                    print(f"  🔹 物体(内部点): 尺度={c_scale:.4f}, 中心={c_center}")
 
                 j_pts = j_pts[:, [1, 0, 2]]
                 e_pts = e_pts[:, [1, 0, 2]]
@@ -330,9 +230,7 @@ class BAE_NET_Wrapper:
                     j_pts = (j_pts / (dim - 1)) * 2.0 - 1.0
                 if len(e_pts) > 0:
                     e_pts = (e_pts / (dim - 1)) * 2.0 - 1.0
-                # ...（后面你的骨骼尺度匹配逻辑保持不变，只把所有 if idx < 3 改成 if file_idx < 3）...
 
-                # 5. 存入列表
                 voxels_list.append(vox)
                 points_list.append(pts)
                 occupancy_list.append(occ)
@@ -344,10 +242,7 @@ class BAE_NET_Wrapper:
                 print(f"Skipping {npz_name}: {e}")
                 continue
 
-        # ==== 收尾 ====
         if len(voxels_list) == 0:
-            print("❌ 没有成功加载任何 shape，检查上面的 Skipping 信息。")
-            # 防止后面再 ZeroDivisionError
             self.data_voxels = np.zeros((0, 64, 64, 64))
             self.data_points = np.zeros((0, 100, 3))
             self.data_occupancy = np.zeros((0, 100), dtype=np.float32)
@@ -372,28 +267,24 @@ class BAE_NET_Wrapper:
             if len(pts) > 0:
                 self.data_endpoints[i, :len(pts), :] = pts
 
-        print(f"\n{'=' * 20} 加载完成 {'=' * 20}")
         print(f"Loaded {len(voxels_list)} shapes.")
         print(f"Max Junctions: {max_j}, Max Endpoints: {max_e}")
 
     def _train_unsupervised(self, config):
         self.model.train()
 
-        # 1. Define Optimizer
         self.optimizer = torch.optim.Adam(
             self.model.parameters(),
             lr=config.learning_rate,
             betas=(config.beta1, 0.999)
         )
 
-        # 2. Define Learning Rate Scheduler
         self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
             self.optimizer,
             T_max=config.epoch,
             eta_min=1e-6
         )
 
-        # Resume logic
         start_epoch = 0
         if hasattr(config, 'resume_epoch') and config.resume_epoch > 0:
             self.load_checkpoint(config.resume_epoch)
@@ -407,13 +298,11 @@ class BAE_NET_Wrapper:
             np.random.shuffle(indices)
             total_loss = 0
 
-            # Variables to monitor branch health across the epoch
             epoch_branch_means = None
 
             for idx in range(num_shapes):
                 shape_idx = indices[idx]
 
-                # --- Sampling Logic (Kept same as your code) ---
                 num_sample = 20000
                 occupancy = self.data_occupancy_vox[shape_idx]
 
@@ -429,7 +318,6 @@ class BAE_NET_Wrapper:
                 sample_idx = np.concatenate([sample_pos, sample_neg])
                 np.random.shuffle(sample_idx)
 
-                # --- Prepare Tensors ---
                 batch_voxels = torch.from_numpy(self.data_voxels[shape_idx]).float().unsqueeze(0).unsqueeze(0).to(
                     self.device)
                 batch_points = torch.from_numpy(self.data_points[shape_idx][sample_idx]).float().unsqueeze(0).to(
@@ -439,9 +327,6 @@ class BAE_NET_Wrapper:
                 batch_junc = torch.from_numpy(self.data_junctions[shape_idx]).float().unsqueeze(0).to(self.device)
                 batch_end = torch.from_numpy(self.data_endpoints[shape_idx]).float().unsqueeze(0).to(self.device)
 
-                # --- Forward Pass ---
-                # branch_logits: [B, N, K]
-                # max_logits:    [B, N, 1] (Not used for loss anymore)
                 branch_logits, _ = self.model(
                     batch_voxels,
                     batch_points,
@@ -450,33 +335,20 @@ class BAE_NET_Wrapper:
                     mode='train'
                 )
 
-                # --- NEW LOSS CALCULATION ---
 
-                # 1. Convert Logits to Probabilities
+
                 branch_probs = torch.sigmoid(branch_logits)  # [B, N, K]
 
-                # 1. Reconstruction (Sum-MSE)
-                # Ensure the parts add up to the whole.
                 sum_preds = torch.sum(branch_probs, dim=2, keepdim=True)
                 loss_recon = F.mse_loss(sum_preds, batch_values)
 
-                # 2. Sharpness / Indecisiveness Penalty (The "Soft" Separator)
-                # We punish predictions near 0.5.
-                # Mathematical curve: parabola that is 0 at x=0/1 and max at x=0.5
                 loss_sharp = torch.mean(branch_probs * (1 - branch_probs))
 
-                # 3. Existence (Gentle "Stay Alive" Nudge)
-                # Keep this small so we don't force them to overlap just to survive.
+
                 branch_means = torch.mean(branch_probs, dim=(0, 1))
                 loss_exists = -torch.mean(torch.log(branch_means + 1e-4))
 
-                # =========================================================
-                # TOTAL LOSS
-                # =========================================================
-                # Weights strategy:
-                # Recon: 1.0 (Main goal)
-                # Sharp: 0.2 (Enough to discourage 0.5, but not break training)
-                # Exists: 0.02 (Lowered this! Too high causes "0.09" overlap)
+
 
                 lambda_sharp = 0.2
                 lambda_exists = 0.02
@@ -496,19 +368,16 @@ class BAE_NET_Wrapper:
                 total_loss += loss.item()
                 current_branch_means = torch.mean(branch_probs, dim=(0, 1))
 
-                # --- Monitor Branch Stats ---
                 if epoch_branch_means is None:
                     epoch_branch_means = current_branch_means.detach().cpu().numpy()
                 else:
                     epoch_branch_means = 0.9 * epoch_branch_means + 0.1 * current_branch_means.detach().cpu().numpy()
 
-            # 3. Update Scheduler
             self.scheduler.step()
 
             current_lr = self.scheduler.get_last_lr()[0]
             avg_loss = total_loss / max(1, num_shapes)
 
-            # Format branch stats for printing
             branch_info = " | ".join([f"{x:.2f}" for x in epoch_branch_means])
 
             epoch_bar.set_postfix(
@@ -543,9 +412,7 @@ class BAE_NET_Wrapper:
         print(f"Checkpoint loaded from epoch {checkpoint['epoch']}")
         return checkpoint['epoch']
 
-    # ==========================================
-    # Fixed: Segmentation Test Function
-    # ==========================================
+
     def test_segmentation(self, test_points, test_voxels, junction_points=None, endpoint_points=None,
                           use_postprocessing=False):
         """
@@ -554,46 +421,16 @@ class BAE_NET_Wrapper:
         self.model.eval()
 
         print("\n" + "=" * 40)
-        print("[DEBUG] 进入 test_segmentation 函数")
 
-        # --- Debug 1: 检查原始输入 ---
-        if junction_points is None:
-            print("  ❌ [Input] junction_points is NONE")
-        else:
-            print(f"  ✅ [Input] junction_points shape: {junction_points.shape}")
-            if len(junction_points) > 0:
-                print(f"     -> Range: Min {junction_points.min():.3f}, Max {junction_points.max():.3f}")
-            else:
-                print("     -> Warning: Array is empty!")
 
-        if endpoint_points is None:
-            print("  ❌ [Input] endpoint_points is NONE")
-        else:
-            print(f"  ✅ [Input] endpoint_points shape: {endpoint_points.shape}")
-            if len(endpoint_points) > 0:
-                print(f"     -> Range: Min {endpoint_points.min():.3f}, Max {endpoint_points.max():.3f}")
-            else:
-                print("     -> Warning: Array is empty!")
-
-        # --- 1. Data Consistency Check (Auto-Rescale) ---
         points_in = test_points.copy()
         p_min, p_max = points_in.min(), points_in.max()
 
         j_in = junction_points.copy() if junction_points is not None else None
         e_in = endpoint_points.copy() if endpoint_points is not None else None
 
-        # if p_min < -0.6 or p_max > 0.6:
-        #     print(f"  ⚠️ [Rescale] 检测到点云范围 [{p_min:.2f}, {p_max:.2f}]，执行 /= 2.0 缩放")
-        #     # points_in /= 2.0
-        #     if j_in is not None: j_in /= 2.0
-        #     if e_in is not None: e_in /= 2.0
-        #
-        #     # Debug Rescale result
-        #     if e_in is not None and len(e_in) > 0:
-        #         print(f"     -> Skeleton Rescaled Range: {e_in.min():.3f} ~ {e_in.max():.3f}")
 
         with torch.no_grad():
-            # --- 2. Handle Voxel Dimensions ---
             t_voxels = torch.FloatTensor(test_voxels).to(self.device)
             if t_voxels.ndim == 3:
                 batch_voxels = t_voxels.unsqueeze(0).unsqueeze(0)
@@ -602,15 +439,12 @@ class BAE_NET_Wrapper:
             else:
                 batch_voxels = t_voxels
 
-            # --- 3. Handle Point Dimensions ---
             if points_in.ndim == 2:
                 batch_points = torch.FloatTensor(points_in).unsqueeze(0).to(self.device)
             else:
                 batch_points = torch.FloatTensor(points_in).to(self.device)
 
-            # --- 4. Handle Skeleton Points ---
             def get_dummy_tensor():
-                print("  ⚠️ [Dummy] 生成了 Dummy Tensor (10.0) 填充缺失的骨骼分支")
                 return torch.ones(1, 1, 3).to(self.device) * 10.0
 
             j_tensor, e_tensor = None, None
@@ -621,13 +455,11 @@ class BAE_NET_Wrapper:
             if e_in is not None and len(e_in) > 0:
                 e_tensor = torch.FloatTensor(e_in).unsqueeze(0).to(self.device)
 
-            # CRITICAL: Ensure both are present
             if j_tensor is not None and e_tensor is None:
                 e_tensor = get_dummy_tensor()
             if e_tensor is not None and j_tensor is None:
                 j_tensor = get_dummy_tensor()
 
-            # --- Debug 2: 检查最终传给模型的 Tensor ---
             print("  [Model Input Check]")
             if j_tensor is not None:
                 print(f"     -> J_Tensor sent to model: {j_tensor.shape}")
@@ -641,7 +473,6 @@ class BAE_NET_Wrapper:
 
             print("=" * 40 + "\n")
 
-            # --- 5. Inference ---
             branch_pred, _ = self.model(
                 batch_voxels,
                 batch_points,
@@ -678,13 +509,7 @@ class BAE_NET_Wrapper:
 
 
     def generate_gt_mesh_from_voxels(self, voxels, threshold=0.5):
-        """
-        使用原始 voxels 生成 ground truth mesh。
-        支持输入形状:
-        - [D, H, W]
-        - [1, D, H, W]
-        - [1, 1, D, H, W]
-        """
+
         try:
             import mcubes
         except ImportError:
@@ -693,7 +518,6 @@ class BAE_NET_Wrapper:
 
         vol = np.asarray(voxels)
 
-        # 自动去掉前面的 batch/channel 维度
         while vol.ndim > 3 and vol.shape[0] == 1:
             vol = vol[0]
 
@@ -706,17 +530,12 @@ class BAE_NET_Wrapper:
         vertices, triangles = mcubes.marching_cubes(vol, threshold)
 
         if len(vertices) == 0:
-            print("[GT Mesh] marching_cubes 找不到等值面 (可能 voxels 全 0 或全 1)")
             return None, None
 
-        # 和预测 mesh 一样做归一化
         vertices = vertices / dim - 0.5
         return vertices, triangles
 
 
-    # ==========================================
-    # Added: Mesh Generation Function
-    # ==========================================
     def generate_mesh(self, voxels, junction_points=None, endpoint_points=None, threshold=0.5):
         try:
             import mcubes
@@ -727,7 +546,6 @@ class BAE_NET_Wrapper:
         self.model.eval()
 
         with torch.no_grad():
-            # --- 1. Handle Voxel Dimensions ---
             t_voxels = torch.FloatTensor(voxels).to(self.device)
             if t_voxels.ndim == 3:
                 batch_voxels = t_voxels.unsqueeze(0).unsqueeze(0)
@@ -736,10 +554,8 @@ class BAE_NET_Wrapper:
             else:
                 batch_voxels = t_voxels
 
-            # Get Shape Code (Z)
             z = self.model.encoder(batch_voxels)
 
-            # --- 2. Handle Skeleton Points ---
             def get_dummy_tensor():
                 return torch.ones(1, 1, 3).to(self.device) * 10.0
 
@@ -756,38 +572,13 @@ class BAE_NET_Wrapper:
             if e_tensor is not None and j_tensor is None:
                 j_tensor = get_dummy_tensor()
 
-            # --- 3. Create Grid ---
             dim = 64
             coords = np.linspace(-1, 1, dim)
             grid_x, grid_y, grid_z = np.meshgrid(coords, coords, coords, indexing='ij')
             grid_points = np.stack([grid_x.flatten(), grid_y.flatten(), grid_z.flatten()], axis=1)
 
-            # --- 4. Batch Inference ---
             batch_size = 8192
-            # predictions = []
-            # total_mesh = []
 
-            # for i in range(0, len(grid_points), batch_size):
-            #     batch = grid_points[i:i + batch_size]
-            #     batch_tensor = torch.FloatTensor(batch).unsqueeze(0).to(self.device)
-
-            #     branch_prob, total_prob = self._generator_infer(
-            #         batch_tensor,
-            #         z,
-            #         j_tensor,
-            #         e_tensor
-            #     )
-
-            #     # branch_prob: [1, B, K]
-            #     # total_prob : [1, B, 1]
-            #     predictions.append(branch_prob.squeeze(0).cpu().numpy())
-            #     total_mesh.append(total_prob.squeeze(0).cpu().numpy())
-
-            # predictions = np.concatenate(predictions, axis=0)
-            # predictions = predictions.reshape(dim, dim, dim, -1)
-
-            # total_mesh = np.concatenate(total_mesh, axis=0)
-            # total_mesh = total_mesh.reshape(dim, dim, dim)
 
             predictions = []
             total_mesh = []
@@ -844,23 +635,17 @@ class BAE_NET_Wrapper:
             return all_vertices, all_triangles, total_vertices, total_triangles
 
     def evaluate_shape_iou(self, shape_idx=0, threshold=0.5, batch_size=8192):
-        """
-        在 64^3 规则网格上，用当前模型 + 骨骼预测 occupancy，
-        和 voxel GT 做 IoU。
-        """
+
         self.model.eval()
         device = self.device
 
         with torch.no_grad():
-            # ---------- 1. GT 体素 ----------
             voxels = self.data_voxels[shape_idx]  # [64,64,64]
             gt = (voxels > 0.5).astype(np.int32)
 
-            # ---------- 2. 编码 z ----------
             t_vox = torch.from_numpy(voxels).float().unsqueeze(0).unsqueeze(0).to(device)
             z = self.model.encoder(t_vox)  # [1,z_dim]
 
-            # ---------- 3. 取骨骼（过滤掉 padding=10.0） ----------
             raw_j = self.data_junctions[shape_idx]  # [J_pad,3]
             raw_e = self.data_endpoints[shape_idx]  # [E_pad,3]
 
@@ -878,7 +663,6 @@ class BAE_NET_Wrapper:
             e_tensor = to_tensor(e_valid)
 
             def get_dummy():
-                # 和 test_segmentation / generate_mesh 的逻辑保持一致
                 return torch.ones(1, 1, 3, device=device) * 10.0
 
             if j_tensor is not None and e_tensor is None:
@@ -886,7 +670,6 @@ class BAE_NET_Wrapper:
             if e_tensor is not None and j_tensor is None:
                 j_tensor = get_dummy()
 
-            # ---------- 4. 在 [-1,1]^3 网格上预测 ----------
             dim = voxels.shape[0]
             coords = np.linspace(-1.0, 1.0, dim)
             gx, gy, gz = np.meshgrid(coords, coords, coords, indexing='ij')
@@ -897,7 +680,6 @@ class BAE_NET_Wrapper:
                 batch_np = grid_points[i:i + batch_size]  # [B,3]
                 batch_tensor = torch.from_numpy(batch_np).float().unsqueeze(0).to(device)  # [1,B,3]
 
-                # 统一用 _generator_infer，拿到整体 occupancy 概率
                 _, total_prob = self._generator_infer(
                     batch_tensor,
                     z,
@@ -921,12 +703,7 @@ class BAE_NET_Wrapper:
             return iou
 
     def _generator_infer(self, points, z, j_tensor=None, e_tensor=None):
-        """
-        统一封装 generator 的输出：
-        - branch_prob: [B, N, K]，每个 branch 的 occupancy 概率
-        - total_prob:  [B, N, 1]，对所有 branch 做 max 后的整体 occupancy 概率
-        无论你的 Generator.forward 返回 1 个还是 2 个，这里都转成这两个东西。
-        """
+
         out = self.model.generator(
             points,
             z,
@@ -934,16 +711,12 @@ class BAE_NET_Wrapper:
             endpoint_points=e_tensor
         )
 
-        # 1. 解包：1 个返回值 or (branch, total)
         if isinstance(out, tuple):
             branch_raw, total_raw = out
         else:
             branch_raw = out
             total_raw = None
 
-        # 2. 统一成“概率”
-        #   - 如果数值明显不在 [0,1]，当成 logits，用 sigmoid
-        #   - 如果已经在 [0,1]，直接用
         with torch.no_grad():
             bmin = float(branch_raw.min())
             bmax = float(branch_raw.max())
@@ -953,9 +726,7 @@ class BAE_NET_Wrapper:
         else:
             branch_prob = branch_raw
 
-        # 3. total_prob：如果 Generator 没给，就自己 max 一下
         if total_raw is not None:
-            # 也做一下 sigmoid 防守
             with torch.no_grad():
                 tmin = float(total_raw.min())
                 tmax = float(total_raw.max())
@@ -964,32 +735,24 @@ class BAE_NET_Wrapper:
             else:
                 total_prob = total_raw
         else:
-            # 自己根据 branch_prob 取 max
             total_prob, _ = torch.max(branch_prob, dim=2, keepdim=True)
 
         return branch_prob, total_prob
     def evaluate_shape_iou_sdf(self, shape_idx=0, threshold=0.5, batch_size=8192):
-        """
-        在 SDF 采样点上算 IoU 和 MSE：
-          - GT: self.data_points[shape_idx], self.data_occupancy[shape_idx]
-          - Pred: 用当前模型 + 骨骼预测这些点的 occupancy 概率
-        """
+
         self.model.eval()
         device = self.device
 
         with torch.no_grad():
-            # ---------- 1. 取 SDF 点 & GT occupancy ----------
             pts = self.data_points[shape_idx]             # [N,3] in [-1,1]^3
             occ = self.data_occupancy[shape_idx]          # [N,] 0/1 (from SDF)
             gt_bin = (occ > 0.5).astype(np.int32)
             N = pts.shape[0]
 
-            # ---------- 2. 编码 z（和训练完全一致） ----------
             voxels = self.data_voxels[shape_idx]          # [64,64,64]
             t_vox = torch.from_numpy(voxels).float().unsqueeze(0).unsqueeze(0).to(device)
             z = self.model.encoder(t_vox)                 # [1,z_dim]
 
-            # ---------- 3. 骨骼（同上：过滤 padding=10） ----------
             raw_j = self.data_junctions[shape_idx]
             raw_e = self.data_endpoints[shape_idx]
 
@@ -1014,7 +777,6 @@ class BAE_NET_Wrapper:
             if e_tensor is not None and j_tensor is None:
                 j_tensor = get_dummy()
 
-            # ---------- 4. 在同一批 SDF 点上预测 ----------
             preds = []
             for i in range(0, N, batch_size):
                 batch_np = pts[i:i + batch_size]                   # [B,3]
@@ -1031,7 +793,6 @@ class BAE_NET_Wrapper:
 
             pred_full = np.concatenate(preds, axis=0).reshape(-1)  # [N,]
 
-            # ---------- 5. IoU + MSE ----------
             pred_bin = (pred_full >= threshold).astype(np.int32)
 
             inter = np.logical_and(gt_bin == 1, pred_bin == 1).sum()

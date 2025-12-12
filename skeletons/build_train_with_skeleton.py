@@ -17,31 +17,9 @@ except ImportError:
     tqdm = None
 
 
-# ============================================================
-# NOTE:
-# Curvature / radius-change keypoint related code is temporarily
-# disabled. If you want to re-enable it in the future, you can
-# add the corresponding functions back here.
-# ============================================================
-
-"""
-# ----------------- curvature & radius keypoints (DISABLED) ----------------- #
-
-def compute_discrete_curvature(points):
-    ...
-def detect_curvature_keypoints(...):
-    ...
-def detect_radius_change_keypoints(...):
-    ...
-"""
-
-# ----------------- basic helpers ----------------- #
 
 def segments_to_point_cloud(segments):
-    """
-    Convert a list of skeleton segments into a point cloud (unique endpoints).
-    segments: [((x1, y1, z1), (x2, y2, z2)), ...]
-    """
+
     points = []
     for p1, p2 in segments:
         points.append(p1)
@@ -52,11 +30,7 @@ def segments_to_point_cloud(segments):
 
 
 def write_off(vertices, faces, out_path):
-    """
-    Write a simple OFF file given vertices and triangular faces.
-    vertices: (V, 3)
-    faces: (F, 3) integer indices
-    """
+
     vertices = np.asarray(vertices, dtype=float)
     faces = np.asarray(faces, dtype=int)
 
@@ -69,24 +43,13 @@ def write_off(vertices, faces, out_path):
             f.write(f"3 {face[0]} {face[1]} {face[2]}\n")
 
 
-# ----------------- mesh & skeleton generation (per npz) ----------------- #
 
 def generate_mesh_and_skeleton_for_npz(
     npz_path,
     skeleton_bin="./MCF_Skeleton_example",
     level=0.5,
 ):
-    """
-    For a given npz file, generate its corresponding OFF mesh and skeleton TXT.
 
-    It will create:
-        <basename>_mc.off
-        <basename>_mc.txt
-    in the same directory as npz_path.
-
-    Returns:
-        off_path, txt_path
-    """
     folder = os.path.dirname(npz_path)
     base = os.path.splitext(os.path.basename(npz_path))[0]
     off_path = os.path.join(folder, f"{base}_mc.off")
@@ -96,11 +59,9 @@ def generate_mesh_and_skeleton_for_npz(
     txt_exists = os.path.exists(txt_path)
 
     if off_exists and txt_exists:
-        # Already generated before, just reuse
         return off_path, txt_path
 
     with np.load(npz_path) as data:
-        # 🔴 Change "voxels" to your actual voxel key if different.
         if "voxels" in data.files:
             voxels = data["voxels"]
         else:
@@ -128,7 +89,6 @@ def generate_mesh_and_skeleton_for_npz(
     return off_path, txt_path
 
 
-# ----------------- skeleton keypoints extraction (per npz) ----------------- #
 
 def compute_skeleton_and_keypoints_for_npz(
     npz_path,
@@ -137,15 +97,7 @@ def compute_skeleton_and_keypoints_for_npz(
     min_nodes=5,
     min_length=0.03,
 ):
-    """
-    For a given npz file, ensure its mesh & skeleton exist, then compute:
-      - skeleton_segments: (M, 2, 3)
-      - skeleton_points:   (K, 3), unique endpoints of segments
-      - junction_points:   (J, 3)
-      - endpoint_points:   (E, 3)
 
-    Returns a dict of numpy arrays ready to be merged into this npz.
-    """
     off_path, txt_path = generate_mesh_and_skeleton_for_npz(
         npz_path=npz_path,
         skeleton_bin=skeleton_bin,
@@ -189,7 +141,6 @@ def compute_skeleton_and_keypoints_for_npz(
     return result
 
 
-# ----------------- main loop over train folder (per npz) ----------------- #
 
 def process_train_folder(train_root,
                          out_root,
@@ -197,15 +148,7 @@ def process_train_folder(train_root,
                          min_nodes=5,
                          min_length=0.03,
                          skeleton_bin="./MCF_Skeleton_example"):
-    """
-    For each npz file under train_root/<object>/, compute:
-        - mesh (.off)
-        - skeleton (.txt)
-        - skeleton & topological keypoints (junctions & endpoints)
-    and save new npz files under out_root with the same relative structure.
 
-    This is a per-npz pipeline: one OFF/TXT per npz.
-    """
     os.makedirs(out_root, exist_ok=True)
 
     obj_names = sorted(

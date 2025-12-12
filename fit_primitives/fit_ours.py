@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 
 
 
-from Ours_model.model_revise_with_keypoints_extra_loss import Encoder3D, BAE_NET_Wrapper
+from Ours_model.model_revise_with_keypoints_extra_loss import Encoder3D, NET_Wrapper
 
 from .utils import process_segmentation_meshes
 from .utils import visualize_meshes_and_cuboid_subplots, evaluate_union_multiple_meshes
@@ -22,17 +22,16 @@ class Config:
         self.epoch = 200000
 
 
-bae_net = BAE_NET_Wrapper(data_dir='data/train_with_skeleton/dog', gf_split=4)
+net = NET_Wrapper(data_dir='data/train_with_skeleton_test_data/chair', gf_split=5)
 config = Config()
-bae_net.load_checkpoint("checkpoint/model_revised_keypoint/dog_6p/ckpt_epoch_1000000.pth")
+net.load_checkpoint("checkpoint/ours/chair_5p/ckpt_epoch_80000.pth")
 idx = 0
-test_voxels = bae_net.data_voxels[idx:idx + 1]
-test_points = bae_net.data_points[idx]
+test_voxels = net.data_voxels[idx:idx + 1]
+test_points = net.data_points[idx]
 
 
-raw_junc = bae_net.data_junctions[idx]
-raw_end  = bae_net.data_endpoints[idx]
-
+raw_junc = net.data_junctions[idx]
+raw_end  = net.data_endpoints[idx]
 mask_j = np.abs(raw_junc[:, 0] - 10.0) > 1e-4
 mask_e = np.abs(raw_end[:, 0]  - 10.0) > 1e-4
 
@@ -67,7 +66,7 @@ fixed_end  = raw_end[mask_e]
 colors = ["red", "blue", "green", "yellow", "purple", "cyan", "orange"]
 
 
-vertices_list, triangles_list, _, _ = bae_net.generate_mesh(
+vertices_list, triangles_list, _, _ = net.generate_mesh(
         test_voxels,
         junction_points=fixed_junc,
         endpoint_points=fixed_end
@@ -87,6 +86,6 @@ meshes, dense_points, cuboids = process_segmentation_meshes(vertices_list, trian
 flat_cuboids = [c for cub_list in cuboids if cub_list is not None for c in cub_list]
 
 
-# visualize_meshes_and_cuboid_subplots(meshes, flat_cuboids)
+visualize_meshes_and_cuboid_subplots(meshes, flat_cuboids)
 
 print(evaluate_union_multiple_meshes(meshes, flat_cuboids))
